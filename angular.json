@@ -6,9 +6,47 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "frontend_wep": {
+    "frontend": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:class": {
+          "skipTests": true
+        },
+        "@schematics/angular:component": {
+          "skipTests": true,
+          "type": "component",
+          "addTypeToClassName": false
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true,
+          "type": "directive",
+          "addTypeToClassName": false
+        },
+        "@schematics/angular:guard": {
+          "skipTests": true,
+          "typeSeparator": "."
+        },
+        "@schematics/angular:interceptor": {
+          "skipTests": true,
+          "typeSeparator": "."
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": true,
+          "typeSeparator": "."
+        },
+        "@schematics/angular:resolver": {
+          "skipTests": true,
+          "typeSeparator": "."
+        },
+        "@schematics/angular:service": {
+          "skipTests": true,
+          "type": "service",
+          "addTypeToClassName": false
+        },
+        "@schematics/angular:module": {
+          "typeSeparator": "."
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -27,27 +65,22 @@
             "styles": [
               "src/styles.css"
             ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "security": {
-              "allowedHosts": []
-            },
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "allowedCommonJsDependencies": [
+              "leaflet"
+            ]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "10kB",
+                  "maximumError": "20kB"
                 }
               ],
               "outputHashing": "all"
@@ -64,16 +97,13 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "frontend_wep:build:production"
+              "buildTarget": "frontend:build:production"
             },
             "development": {
-              "buildTarget": "frontend_wep:build:development"
+              "buildTarget": "frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test"
         }
       }
     }
