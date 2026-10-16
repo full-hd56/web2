@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { Sidebar } from '../../components/sidebar/sidebar';
 
 interface RiderProfile {
   id: string;
@@ -14,7 +15,7 @@ interface RiderProfile {
 
 @Component({
   selector: 'app-rider-settings',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, Sidebar],
   templateUrl: './rider-settings.html',
   styleUrl: './rider-settings.css',
 })

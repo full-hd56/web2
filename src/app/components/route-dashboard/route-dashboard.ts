@@ -1,3 +1,4 @@
+import { Sidebar } from '../sidebar/sidebar';
 import { Component, OnInit, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -22,138 +23,11 @@ interface RiderRoute {
 @Component({
   selector: 'app-route-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, Sidebar],
   template: `
     <div class="flex min-h-screen bg-slate-50 font-sans antialiased text-slate-800 selection:bg-amber-500 selection:text-white">
       
-      <!-- ================================================================== -->
-      <!-- LEFT SIDEBAR: DARK OBSIDIAN MODERN DESIGN                         -->
-      <!-- ================================================================== -->
-      <aside class="w-72 bg-slate-900 border-r border-slate-800 text-slate-200 flex flex-col justify-between p-5 shrink-0 min-h-screen hidden md:flex z-30">
-        <div class="space-y-6">
-          
-          <!-- Brand Logo / Header -->
-          <div class="flex items-center gap-3 pb-5 border-b border-slate-800">
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20 ring-2 ring-white/10 shrink-0">
-              🍱
-            </div>
-            <div>
-              <div class="flex items-center gap-1.5">
-                <h1 class="text-base font-bold text-white tracking-tight leading-tight">
-                  ข้าวกล่องส่งด่วน
-                </h1>
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  มมส.
-                </span>
-              </div>
-              <p class="text-xs text-slate-400 mt-0.5">
-                CVRPTW Engine ขามเรียง
-              </p>
-            </div>
-          </div>
-
-          <!-- Live Dispatch Clock Card -->
-          <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 shadow-inner">
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                เวลาปัจจุบัน
-              </span>
-              <span class="font-mono text-amber-400 font-bold tracking-wider text-sm">{{ currentTime }}</span>
-            </div>
-            <div class="mt-2 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
-              <span class="text-slate-400">รอบตัดส่ง CVRPTW:</span>
-              <span class="font-semibold text-white px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30">
-                11:30 - 12:30 น.
-              </span>
-            </div>
-          </div>
-
-          <!-- Navigation Menu -->
-          <div>
-            <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">
-              เมนูระบบ
-            </div>
-            <nav class="space-y-1.5 text-sm font-medium">
-              <a
-                routerLink="/orders"
-                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all group"
-              >
-                <div class="flex items-center gap-3">
-                  <svg class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                  </svg>
-                  <span>จัดการออเดอร์</span>
-                </div>
-              </a>
-
-              <a
-                routerLink="/routes"
-                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30 shadow-sm transition-all"
-              >
-                <div class="flex items-center gap-3">
-                  <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                  </svg>
-                  <span>จัดเส้นทางไรเดอร์</span>
-                </div>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono font-bold">
-                  {{ riders.length }} คัน
-                </span>
-              </a>
-
-              <a
-                routerLink="/rider-settings"
-                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all group"
-              >
-                <div class="flex items-center gap-3">
-                  <svg class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  <span>ไรเดอร์และตั้งค่า</span>
-                </div>
-              </a>
-
-              <a
-                routerLink="/rider"
-                class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-all group"
-              >
-                <div class="flex items-center gap-3">
-                  <span class="text-sm">🛵</span>
-                  <span>มุมมองไรเดอร์ (Rider)</span>
-                </div>
-              </a>
-            </nav>
-          </div>
-
-          <!-- Central Depot Info Box -->
-          <div class="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/60 text-xs text-slate-300 space-y-2">
-            <div class="flex items-center gap-2 font-bold text-white text-xs">
-              <span>🏢</span>
-              <span>ศูนย์กระจายอาหาร มมส.</span>
-            </div>
-            <div class="text-[11px] text-slate-400">
-              พิกัด: 16.2468, 103.2520 (รัศมี 3.0 กม.)
-            </div>
-            <div class="pt-1.5 border-t border-slate-700/50 text-[11px] space-y-1">
-              <div class="flex justify-between text-slate-400">
-                <span>ขีดจำกัดความจุ:</span>
-                <span class="text-amber-400 font-semibold">10 กล่อง / ไรเดอร์</span>
-              </div>
-              <div class="flex justify-between text-slate-400">
-                <span>ความเร็วเฉลี่ย:</span>
-                <span class="text-slate-200 font-semibold">25 กม./ชม.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
-          <span>Antigravity Dispatch v2.0</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-        </div>
-      </aside>
+      <app-sidebar [routesBadge]="riders.length + ' คัน'" />
 
       <!-- ================================================================== -->
       <!-- MAIN WORKSPACE CONTENT AREA                                        -->

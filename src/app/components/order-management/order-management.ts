@@ -1,3 +1,4 @@
+import { Sidebar } from '../sidebar/sidebar';
 import { Component, OnInit, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -31,7 +32,7 @@ interface MsuPreset {
 @Component({
   selector: 'app-order-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, Sidebar],
   templateUrl: './order-management.html',
   styleUrls: ['./order-management.css'],
 })
