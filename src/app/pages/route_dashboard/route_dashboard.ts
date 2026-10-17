@@ -48,7 +48,63 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   private map: L.Map | null = null;
   private routeLayers: L.LayerGroup | null = null;
+  // คำนวณกำไรและค่าใช้จ่ายของไรเดอร์หนึ่งคน
+  getFoodProfit(rider: RiderRoute): number {
+    return rider.totalBoxes * (65 - 40);
+  }
 
+  getRiderCost(rider: RiderRoute): number {
+    if (rider.orders.length === 0) return 0;
+
+    const pickupFee = 15;
+    const deliveryCost = rider.totalDistanceKm * rider.totalBoxes * 2;
+
+    return pickupFee + deliveryCost;
+  }
+
+  getNetProfit(rider: RiderRoute): number {
+    return this.getFoodProfit(rider) - this.getRiderCost(rider);
+  }
+    private distanceKm(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
+    const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+    const earthRadiusKm = 6371;
+
+    const dLat = toRadians(lat2 - lat1);
+    const dLng = toRadians(lng2 - lng1);
+    const startLat = toRadians(lat1);
+    const endLat = toRadians(lat2);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(startLat) * Math.cos(endLat) * Math.sin(dLng / 2) ** 2;
+
+    return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  private calculateRiderDistance(rider: RiderRoute): number {
+    let totalDistanceKm = 0;
+    let fromLat = this.DEPOT.lat;
+    let fromLng = this.DEPOT.lng;
+
+    for (const order of rider.orders) {
+      totalDistanceKm += this.distanceKm(
+        fromLat,
+        fromLng,
+        order.latitude,
+        order.longitude
+      );
+
+      fromLat = order.latitude;
+      fromLng = order.longitude;
+    }
+
+    return Number(totalDistanceKm.toFixed(2));
+  }
   ngOnInit(): void {
     this.updateClock();
     this.timerInterval = setInterval(() => this.updateClock(), 1000);
@@ -139,7 +195,10 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
       r.orders.push(order);
       r.totalBoxes += order.box_quantity;
     }
-
+    for (const rider of resultRiders) {
+      rider.totalDistanceKm = this.calculateRiderDistance(rider);
+    }
+    
     this.riders = resultRiders;
     this.totalBoxesRouted = resultRiders.reduce((s, r) => s + r.totalBoxes, 0);
   }
