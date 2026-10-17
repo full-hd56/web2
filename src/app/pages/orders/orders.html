@@ -480,49 +480,52 @@
           </div>
 
           <!-- Interactive Leaflet Map Box (Visible in SPLIT and MAP view) -->
-          @if (viewMode === 'SPLIT' || viewMode === 'MAP') {
-            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden relative">
-              <!-- Map Top Overlay Bar -->
-              <div class="px-4 py-2.5 bg-slate-900 text-white text-xs flex items-center justify-between z-10 relative">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  <span class="font-bold">แผนที่กระจายอาหาร มมส. ขามเรียง (รัศมี 3.0 กม.)</span>
-                  <span class="text-slate-400 text-[11px] hidden sm:inline">· คลิกบนแผนที่เพื่อเลือกพิกัดได้ทันที</span>
-                </div>
-                <button
-                  type="button"
-                  (click)="resetMapView()"
-                  class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-semibold transition flex items-center gap-1"
-                >
-                  <span>🎯 จุดศูนย์กลาง มมส.</span>
-                </button>
+          <div
+            [class.hidden]="viewMode === 'TABLE'"
+            class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden relative"
+          >
+            <!-- Map Top Overlay Bar -->
+            <div class="px-4 py-2.5 bg-slate-900 text-white text-xs flex items-center justify-between z-10 relative">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="font-bold">แผนที่กระจายอาหาร มมส. ขามเรียง (รัศมี 3.0 กม.)</span>
+                <span class="text-slate-400 text-[11px] hidden sm:inline">· คลิกบนแผนที่เพื่อเลือกพิกัดได้ทันที</span>
               </div>
+              <button
+                type="button"
+                (click)="resetMapView()"
+                class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-semibold transition flex items-center gap-1"
+              >
+                <span>🎯 จุดศูนย์กลาง มมส.</span>
+              </button>
+            </div>
 
-              <!-- Map Container -->
-              <div
-                id="orderMap"
-                class="w-full transition-all"
-                [style.height]="viewMode === 'MAP' ? '540px' : '340px'"
-              ></div>
+            <!-- Map Container -->
+            <div
+              id="orderMap"
+              class="w-full transition-all"
+              [style.height]="viewMode === 'MAP' ? '540px' : '340px'"
+            ></div>
 
-              <!-- Map Bottom Legend -->
-              <div class="p-2.5 bg-slate-50 border-t border-slate-200/80 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
-                <div class="flex items-center gap-3">
-                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> รอจัดเส้นทาง</span>
-                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> กำลังจัดเส้นทาง</span>
-                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> จัดส่งสำเร็จ</span>
-                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> ยกเลิก</span>
-                </div>
-                <div class="text-slate-400 italic">
-                  ตัวเลขบนหมุดคือจำนวนกล่องข้าว
-                </div>
+            <!-- Map Bottom Legend -->
+            <div class="p-2.5 bg-slate-50 border-t border-slate-200/80 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> รอจัดเส้นทาง</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> กำลังจัดเส้นทาง</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> จัดส่งสำเร็จ</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> ยกเลิก</span>
+              </div>
+              <div class="text-slate-400 italic">
+                ตัวเลขบนหมุดคือจำนวนกล่องข้าว
               </div>
             </div>
-          }
+          </div>
 
           <!-- Data Table (Visible in SPLIT and TABLE view) -->
-          @if (viewMode === 'SPLIT' || viewMode === 'TABLE') {
-            <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+          <div
+            [class.hidden]="viewMode === 'MAP'"
+            class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden"
+          >
               
               <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -691,7 +694,6 @@
                 </table>
               </div>
             </div>
-          }
         </section>
       </div>
     </div>

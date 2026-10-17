@@ -3,6 +3,8 @@ import { Component, OnInit, AfterViewInit, OnDestroy, inject, ChangeDetectorRef 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import * as L from 'leaflet';
 import { OrderService } from '../../services/order';
 import {
@@ -67,9 +69,9 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     { status: 'CANCELLED', label: 'ยกเลิกแล้ว', countKey: 'cancelled_orders' },
   ];
 
-  readonly viewModes: Array<{ id: 'SPLIT' | 'TABLE' | 'MAP'; label: string }> = [
-    { id: 'SPLIT', label: '⚡ แยกจอ (ตาราง + แผนที่)' },
+  readonly viewModes: Array<{ id: 'TABLE' | 'SPLIT' | 'MAP'; label: string }> = [
     { id: 'TABLE', label: '📊 ตารางรายการ' },
+    { id: 'SPLIT', label: '⚡ แยกจอ (ตาราง + แผนที่)' },
     { id: 'MAP', label: '🗺️ แผนที่พิกัดเต็มจอ' },
   ];
 
@@ -94,7 +96,9 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
 
   selectedStatus: OrderStatus | 'ALL' = 'ALL';
   searchTerm = '';
-  viewMode: 'SPLIT' | 'TABLE' | 'MAP' = 'SPLIT';
+  viewMode: 'TABLE' | 'SPLIT' | 'MAP' = 'TABLE';
+  private searchSubject = new Subject<string>();
+  private searchSub: Subscription | null = null;
 
   isEditing = false;
   editingOrderId = '';
@@ -160,15 +164,24 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.recalculateDistance();
     this.loadData();
+    this.searchSub = this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.loadOrders();
+      });
     window.addEventListener('edit-order-event', this.onCustomEdit);
     window.addEventListener('cancel-order-event', this.onCustomCancel);
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.initMap(), 200);
+    if (this.viewMode !== 'TABLE') {
+      setTimeout(() => this.initMap(), 200);
+    }
   }
 
   ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
     window.removeEventListener('edit-order-event', this.onCustomEdit);
     window.removeEventListener('cancel-order-event', this.onCustomCancel);
     if (this.map) {
@@ -315,27 +328,45 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   }
 
   focusOrderOnMap(order: Order): void {
-    if (!this.map) return;
-    this.map.flyTo([order.latitude, order.longitude], 17, { duration: 0.8 });
-    if (this.markerLayerGroup) {
-      this.markerLayerGroup.eachLayer((layer: any) => {
-        if (layer instanceof L.Marker) {
-          const latlng = layer.getLatLng();
-          if (Math.abs(latlng.lat - order.latitude) < 0.0001 && Math.abs(latlng.lng - order.longitude) < 0.0001) {
-            layer.openPopup();
-          }
-        }
-      });
+    if (this.viewMode === 'TABLE') {
+      this.setViewMode('SPLIT');
     }
+    setTimeout(() => {
+      if (!this.map) {
+        this.initMap();
+      }
+      if (this.map) {
+        this.map.flyTo([order.latitude, order.longitude], 17, { duration: 0.8 });
+        if (this.markerLayerGroup) {
+          this.markerLayerGroup.eachLayer((layer: any) => {
+            if (layer instanceof L.Marker) {
+              const latlng = layer.getLatLng();
+              if (Math.abs(latlng.lat - order.latitude) < 0.0001 && Math.abs(latlng.lng - order.longitude) < 0.0001) {
+                layer.openPopup();
+              }
+            }
+          });
+        }
+      }
+    }, 150);
   }
 
   resetMapView(): void {
     if (this.map) this.map.flyTo([this.DEPOT.lat, this.DEPOT.lng], 15, { duration: 0.8 });
   }
 
-  setViewMode(mode: 'SPLIT' | 'TABLE' | 'MAP'): void {
+  setViewMode(mode: 'TABLE' | 'SPLIT' | 'MAP'): void {
     this.viewMode = mode;
-    setTimeout(() => this.map?.invalidateSize(), 150);
+    if (mode === 'SPLIT' || mode === 'MAP') {
+      setTimeout(() => {
+        if (!this.map) {
+          this.initMap();
+        } else {
+          this.map.invalidateSize();
+          this.renderOrderMarkers();
+        }
+      }, 100);
+    }
   }
 
   // ============================================================================
@@ -371,6 +402,21 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   // Data Loading & Filtering
   // ============================================================================
   loadData(): void {
+    this.loadOrders();
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    this.orderService.getStats().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Failed to load stats', err),
+    });
+  }
+
+  loadOrders(): void {
     this.isLoading = true;
     this.orderService.getOrders('ALL', this.searchTerm).subscribe({
       next: (data) => {
@@ -383,16 +429,13 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
           }
         }
         this.renderOrderMarkers();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
         this.showToast('ไม่สามารถโหลดข้อมูลออเดอร์ได้: ' + (err.error?.error || err.message), 'error');
+        this.cdr.markForCheck();
       },
-    });
-
-    this.orderService.getStats().subscribe({
-      next: (stats) => (this.stats = stats),
-      error: (err) => console.error('Failed to load stats', err),
     });
   }
 
@@ -405,8 +448,15 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.renderOrderMarkers();
   }
 
-  onSearchChange(): void { this.loadData(); }
-  clearSearch(): void { this.searchTerm = ''; this.loadData(); }
+  onSearchChange(): void {
+    this.searchSubject.next(this.searchTerm);
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.searchSubject.next('');
+    this.loadOrders();
+  }
 
   // ============================================================================
   // Phone Formatting & Fast Customer Lookup

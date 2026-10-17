@@ -1,16 +1,26 @@
 import { Routes } from '@angular/router';
-import { Orders } from './pages/orders/orders';
-import { RouteDashboard } from './pages/route_dashboard/route_dashboard';
-import { Rider } from './pages/rider/rider';
-import { Main } from './pages/main/main';
-import { AddCustomer } from './pages/add_customer/add_customer';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'orders', pathMatch: 'full' },
-  { path: 'orders', component: Orders },
-  { path: 'routes', component: RouteDashboard },
-  { path: 'rider', component: Rider },
-  { path: 'customers', component: AddCustomer },
-  { path: 'main', component: Main },
-  { path: '**', redirectTo: 'orders' }
+  {
+    path: 'orders',
+    loadComponent: () => import('./pages/orders/orders').then((m) => m.Orders),
+  },
+  {
+    path: 'routes',
+    loadComponent: () => import('./pages/route_dashboard/route_dashboard').then((m) => m.RouteDashboard),
+  },
+  {
+    path: 'rider',
+    loadComponent: () => import('./pages/rider/rider').then((m) => m.Rider),
+  },
+  {
+    path: 'customers',
+    loadComponent: () => import('./pages/add_customer/add_customer').then((m) => m.AddCustomer),
+  },
+  {
+    path: 'main',
+    loadComponent: () => import('./pages/main/main').then((m) => m.Main),
+  },
+  { path: '**', redirectTo: 'orders' },
 ];
