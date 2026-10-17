@@ -308,28 +308,24 @@
               </div>
 
               <div class="grid grid-cols-2 gap-2.5">
-                <div>
-                  <input
-                    type="number"
-                    step="0.00001"
-                    [(ngModel)]="formData.latitude"
-                    (ngModelChange)="onCoordinateChange()"
-                    name="latitude"
-                    placeholder="ละติจูด"
-                    class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-slate-900 font-mono text-xs transition outline-none"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    step="0.00001"
-                    [(ngModel)]="formData.longitude"
-                    (ngModelChange)="onCoordinateChange()"
-                    name="longitude"
-                    placeholder="ลองจิจูด"
-                    class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-slate-900 font-mono text-xs transition outline-none"
-                  />
-                </div>
+                <input
+                  type="number"
+                  step="0.00001"
+                  [(ngModel)]="formData.latitude"
+                  (ngModelChange)="onCoordinateChange()"
+                  name="latitude"
+                  placeholder="ละติจูด"
+                  class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-slate-900 font-mono text-xs transition outline-none"
+                />
+                <input
+                  type="number"
+                  step="0.00001"
+                  [(ngModel)]="formData.longitude"
+                  (ngModelChange)="onCoordinateChange()"
+                  name="longitude"
+                  placeholder="ลองจิจูด"
+                  class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-slate-900 font-mono text-xs transition outline-none"
+                />
               </div>
 
               <!-- Distance Haversine Feedback Banner -->
@@ -375,33 +371,17 @@
               </div>
 
               <div class="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  (click)="setBoxQuantity(1)"
-                  class="py-2.5 rounded-xl font-bold text-sm border-2 transition text-center flex flex-col items-center justify-center gap-0.5"
-                  [ngClass]="formData.box_quantity === 1 ? 'border-orange-500 bg-orange-50/80 text-orange-700 shadow-xs' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'"
-                >
-                  <span>1 กล่อง</span>
-                  <span class="text-[11px] font-normal text-slate-500">฿65</span>
-                </button>
-                <button
-                  type="button"
-                  (click)="setBoxQuantity(2)"
-                  class="py-2.5 rounded-xl font-bold text-sm border-2 transition text-center flex flex-col items-center justify-center gap-0.5"
-                  [ngClass]="formData.box_quantity === 2 ? 'border-orange-500 bg-orange-50/80 text-orange-700 shadow-xs' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'"
-                >
-                  <span>2 กล่อง</span>
-                  <span class="text-[11px] font-normal text-slate-500">฿130</span>
-                </button>
-                <button
-                  type="button"
-                  (click)="setBoxQuantity(3)"
-                  class="py-2.5 rounded-xl font-bold text-sm border-2 transition text-center flex flex-col items-center justify-center gap-0.5"
-                  [ngClass]="formData.box_quantity === 3 ? 'border-orange-500 bg-orange-50/80 text-orange-700 shadow-xs' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'"
-                >
-                  <span>3 กล่อง</span>
-                  <span class="text-[11px] font-normal text-slate-500">฿195</span>
-                </button>
+                @for (qty of [1, 2, 3]; track qty) {
+                  <button
+                    type="button"
+                    (click)="setBoxQuantity(qty)"
+                    class="py-2.5 rounded-xl font-bold text-sm border-2 transition text-center flex flex-col items-center justify-center gap-0.5"
+                    [ngClass]="formData.box_quantity === qty ? 'border-orange-500 bg-orange-50/80 text-orange-700 shadow-xs' : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'"
+                  >
+                    <span>{{ qty }} กล่อง</span>
+                    <span class="text-[11px] font-normal text-slate-500">฿{{ qty * DEPOT.boxPriceThb }}</span>
+                  </button>
+                }
               </div>
 
               <!-- Price & Profit Breakdown Card -->
@@ -443,30 +423,16 @@
             
             <!-- View Mode Switcher -->
             <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-fit">
-              <button
-                type="button"
-                (click)="setViewMode('SPLIT')"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
-                [ngClass]="viewMode === 'SPLIT' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-              >
-                ⚡ แยกจอ (ตาราง + แผนที่)
-              </button>
-              <button
-                type="button"
-                (click)="setViewMode('TABLE')"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
-                [ngClass]="viewMode === 'TABLE' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-              >
-                📊 ตารางรายการ
-              </button>
-              <button
-                type="button"
-                (click)="setViewMode('MAP')"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
-                [ngClass]="viewMode === 'MAP' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
-              >
-                🗺️ แผนที่พิกัดเต็มจอ
-              </button>
+              @for (mode of viewModes; track mode.id) {
+                <button
+                  type="button"
+                  (click)="setViewMode(mode.id)"
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                  [ngClass]="viewMode === mode.id ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                >
+                  {{ mode.label }}
+                </button>
+              }
             </div>
 
             <!-- Instant Search Input -->
@@ -495,66 +461,22 @@
 
           <!-- Status Filter Tabs -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <button
-              type="button"
-              (click)="setFilterStatus('ALL')"
-              class="px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0"
-              [ngClass]="selectedStatus === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
-            >
-              <span>ทั้งหมด</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono" [ngClass]="selectedStatus === 'ALL' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'">
-                {{ stats.total_orders }}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              (click)="setFilterStatus('PENDING')"
-              class="px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0"
-              [ngClass]="selectedStatus === 'PENDING' ? 'bg-amber-500 text-white shadow-xs' : 'bg-white text-amber-800 hover:bg-amber-50 border border-amber-200'"
-            >
-              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span>รอจัดเส้นทาง</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-amber-100 text-amber-900">
-                {{ stats.pending_orders }}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              (click)="setFilterStatus('ROUTING')"
-              class="px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0"
-              [ngClass]="selectedStatus === 'ROUTING' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-blue-800 hover:bg-blue-50 border border-blue-200'"
-            >
-              <span>กำลังจัดเส้นทาง</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-blue-100 text-blue-900">
-                {{ stats.routing_orders }}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              (click)="setFilterStatus('COMPLETED')"
-              class="px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0"
-              [ngClass]="selectedStatus === 'COMPLETED' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200'"
-            >
-              <span>จัดส่งสำเร็จ</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-emerald-100 text-emerald-900">
-                {{ stats.completed_orders }}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              (click)="setFilterStatus('CANCELLED')"
-              class="px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0"
-              [ngClass]="selectedStatus === 'CANCELLED' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-rose-800 hover:bg-rose-50 border border-rose-200'"
-            >
-              <span>ยกเลิกแล้ว</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-rose-100 text-rose-900">
-                {{ stats.cancelled_orders }}
-              </span>
-            </button>
+            @for (tab of filterTabs; track tab.status) {
+              <button
+                type="button"
+                (click)="setFilterStatus(tab.status)"
+                class="px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 shrink-0"
+                [ngClass]="selectedStatus === tab.status ? (tab.status === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : tab.status === 'PENDING' ? 'bg-amber-500 text-white shadow-xs' : tab.status === 'ROUTING' ? 'bg-blue-600 text-white shadow-xs' : tab.status === 'COMPLETED' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-rose-600 text-white shadow-xs') : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+              >
+                @if (tab.status === 'PENDING') {
+                  <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                }
+                <span>{{ tab.label }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono" [ngClass]="selectedStatus === tab.status ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'">
+                  {{ stats[tab.countKey] }}
+                </span>
+              </button>
+            }
           </div>
 
           <!-- Interactive Leaflet Map Box (Visible in SPLIT and MAP view) -->
@@ -692,9 +614,9 @@
                             <div class="flex items-center gap-1.5">
                               <span
                                 class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold"
-                                [ngClass]="(order.distance_from_depot_km || 0) <= 1.5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+                                [ngClass]="getOrderDistance(order) <= 1.5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
                               >
-                                {{ (order.distance_from_depot_km != null ? order.distance_from_depot_km : calculateHaversine(DEPOT.lat, DEPOT.lng, order.latitude, order.longitude)).toFixed(2) }} กม.
+                                {{ getOrderDistance(order) }} กม.
                               </span>
                               <span class="text-[11px] font-mono text-slate-400">
                                 ({{ order.latitude.toFixed(4) }}, {{ order.longitude.toFixed(4) }})
@@ -869,4 +791,3 @@
   }
 
 </div>
-

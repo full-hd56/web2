@@ -1,5 +1,5 @@
 import { Sidebar } from '../../components/sidebar/sidebar';
-import { Component, OnInit, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -9,9 +9,6 @@ import {
   Order,
   OrderStatus,
   OrderStats,
-  CreateOrderDto,
-  UpdateOrderDto,
-  RoutingTriggerResult,
 } from '../../models/order';
 
 interface Toast {
@@ -39,6 +36,7 @@ interface MsuPreset {
 export class Orders implements OnInit, AfterViewInit, OnDestroy {
   private orderService = inject(OrderService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   // Depot Info (MSU Khamriang)
   readonly DEPOT = {
@@ -53,9 +51,29 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     peakWindow: '11:30 - 12:30 น.',
   };
 
-  // State
+  readonly STATUS_META: Record<OrderStatus, { label: string; badge: string; bg: string }> = {
+    PENDING: { label: 'รอจัดเส้นทาง', badge: 'status-pill-pending', bg: 'bg-amber-500' },
+    ROUTING: { label: 'กำลังจัดเส้นทาง', badge: 'status-pill-routing', bg: 'bg-indigo-600' },
+    ASSIGNED: { label: 'มอบหมายแล้ว', badge: 'status-pill-assigned', bg: 'bg-purple-600' },
+    COMPLETED: { label: 'จัดส่งสำเร็จ', badge: 'status-pill-completed', bg: 'bg-emerald-600' },
+    CANCELLED: { label: 'ยกเลิกแล้ว', badge: 'status-pill-cancelled', bg: 'bg-rose-500' },
+  };
+
+  readonly filterTabs: Array<{ status: OrderStatus | 'ALL'; label: string; countKey: keyof OrderStats }> = [
+    { status: 'ALL', label: 'ทั้งหมด', countKey: 'total_orders' },
+    { status: 'PENDING', label: 'รอจัดเส้นทาง', countKey: 'pending_orders' },
+    { status: 'ROUTING', label: 'กำลังจัดเส้นทาง', countKey: 'routing_orders' },
+    { status: 'COMPLETED', label: 'จัดส่งสำเร็จ', countKey: 'completed_orders' },
+    { status: 'CANCELLED', label: 'ยกเลิกแล้ว', countKey: 'cancelled_orders' },
+  ];
+
+  readonly viewModes: Array<{ id: 'SPLIT' | 'TABLE' | 'MAP'; label: string }> = [
+    { id: 'SPLIT', label: '⚡ แยกจอ (ตาราง + แผนที่)' },
+    { id: 'TABLE', label: '📊 ตารางรายการ' },
+    { id: 'MAP', label: '🗺️ แผนที่พิกัดเต็มจอ' },
+  ];
+
   orders: Order[] = [];
-  allOrders: Order[] = [];
   stats: OrderStats = {
     total_orders: 0,
     total_boxes: 0,
@@ -74,16 +92,10 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   isRoutingTriggering = false;
   isResetting = false;
 
-  // View & Filter States
   selectedStatus: OrderStatus | 'ALL' = 'ALL';
   searchTerm = '';
   viewMode: 'SPLIT' | 'TABLE' | 'MAP' = 'SPLIT';
 
-  // Live Clock & Dispatch Countdown
-  currentTime = '';
-  private timerInterval: any;
-
-  // Form State
   isEditing = false;
   editingOrderId = '';
 
@@ -100,24 +112,17 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   currentDistanceKm = 0.27;
   isWithinRadius = true;
 
-  // Modals & Dialogs
   isMapPinModalOpen = false;
   isResetConfirmOpen = false;
-  isRoutingSuccessModalOpen = false;
-  lastRoutingResult: RoutingTriggerResult | null = null;
 
-  // Toasts
   toasts: Toast[] = [];
   private toastCounter = 0;
 
-  // Leaflet Map References
   private map: L.Map | null = null;
   private markerLayerGroup: L.LayerGroup | null = null;
-  private depotCircle: L.Circle | null = null;
   private selectionPinMarker: L.Marker | null = null;
 
-  // MSU Landmarks Preset with calculated Haversine distance
-  msuPresets: MsuPreset[] = [
+  readonly msuPresets: MsuPreset[] = [
     { label: 'หอพักตักศิลาแกรนด์', name: 'คุณกิตติศักดิ์ (ตักศิลา)', phone: '089-123-4567', lat: 16.2482, lng: 103.2541, distanceKm: 0.27 },
     { label: 'คณะวิทยาการสารสนเทศ (IT-MSU)', name: 'คุณนภัสสร (คณะ IT)', phone: '081-987-6543', lat: 16.2449, lng: 103.2498, distanceKm: 0.32 },
     { label: 'ตลาดน้อย มมส.', name: 'คุณพิมลวรรณ (ตลาดน้อย)', phone: '086-444-2390', lat: 16.2435, lng: 103.2510, distanceKm: 0.38 },
@@ -127,8 +132,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     { label: 'ศูนย์การค้าเสริมไทยคอมเพล็กซ์', name: 'คุณเอกภพ (เสริมไทย)', phone: '082-123-9988', lat: 16.2085, lng: 103.2750, distanceKm: 4.85 },
   ];
 
-  // Customer Directory for Phone Lookup
-  customerDirectory: { [phone: string]: { name: string; lat: number; lng: number } } = {
+  customerDirectory: Record<string, { name: string; lat: number; lng: number }> = {
     '081-234-5678': { name: 'คุณมานี ศรีสวัสดิ์', lat: 16.2475, lng: 103.2535 },
     '089-111-2233': { name: 'คุณสมศรี มหาสารคาม', lat: 16.2450, lng: 103.2515 },
     '086-444-2390': { name: 'คุณพิมลวรรณ (ตลาดน้อย)', lat: 16.2435, lng: 103.2510 },
@@ -140,50 +144,37 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   get minRidersNeeded(): number {
     return Math.max(1, Math.ceil(this.stats.total_boxes / this.DEPOT.maxBoxesPerRider));
   }
+  get totalFormPrice(): number { return this.formData.box_quantity * this.DEPOT.boxPriceThb; }
+  get totalFormCost(): number { return this.formData.box_quantity * this.DEPOT.boxCostThb; }
+  get totalFormProfit(): number { return this.formData.box_quantity * this.DEPOT.grossProfitThb; }
 
-  get totalFormPrice(): number {
-    return this.formData.box_quantity * this.DEPOT.boxPriceThb;
-  }
-
-  get totalFormCost(): number {
-    return this.formData.box_quantity * this.DEPOT.boxCostThb;
-  }
-
-  get totalFormProfit(): number {
-    return this.formData.box_quantity * this.DEPOT.grossProfitThb;
-  }
+  private onCustomEdit = (e: any) => {
+    const order = this.orders.find((o) => o.id === e.detail);
+    if (order) this.editOrder(order);
+  };
+  private onCustomCancel = (e: any) => {
+    const order = this.orders.find((o) => o.id === e.detail);
+    if (order) this.cancelOrder(order);
+  };
 
   ngOnInit(): void {
-    this.updateClock();
-    this.timerInterval = setInterval(() => this.updateClock(), 1000);
     this.recalculateDistance();
     this.loadData();
+    window.addEventListener('edit-order-event', this.onCustomEdit);
+    window.addEventListener('cancel-order-event', this.onCustomCancel);
   }
 
   ngAfterViewInit(): void {
-    // Initialize map after Angular finishes DOM rendering
-    setTimeout(() => {
-      this.initMap();
-    }, 200);
+    setTimeout(() => this.initMap(), 200);
   }
 
   ngOnDestroy(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
+    window.removeEventListener('edit-order-event', this.onCustomEdit);
+    window.removeEventListener('cancel-order-event', this.onCustomCancel);
     if (this.map) {
       this.map.remove();
       this.map = null;
     }
-  }
-
-  private updateClock(): void {
-    const now = new Date();
-    this.currentTime = now.toLocaleTimeString('th-TH', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
   }
 
   // ============================================================================
@@ -193,7 +184,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     const container = document.getElementById('orderMap');
     if (!container || this.map) return;
 
-    // Create Leaflet Map centered at MSU Khamriang
     this.map = L.map('orderMap', {
       center: [this.DEPOT.lat, this.DEPOT.lng],
       zoom: 15,
@@ -201,13 +191,9 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       attributionControl: false,
     });
 
-    // Clean OpenStreetMap TileLayer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-    }).addTo(this.map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(this.map);
 
-    // Delivery Boundary: 3.0 KM Radius Circle
-    this.depotCircle = L.circle([this.DEPOT.lat, this.DEPOT.lng], {
+    L.circle([this.DEPOT.lat, this.DEPOT.lng], {
       radius: this.DEPOT.maxRadiusKm * 1000,
       color: '#EA580C',
       weight: 2,
@@ -216,7 +202,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       fillOpacity: 0.05,
     }).addTo(this.map);
 
-    // MSU Central Depot Marker
     const depotIcon = L.divIcon({
       className: 'custom-depot-pin',
       html: `
@@ -242,34 +227,26 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       </div>
     `);
 
-    // Layer group for all order pins
     this.markerLayerGroup = L.layerGroup().addTo(this.map);
 
-    // Map Click Handler: Set coordinates directly from clicking map!
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.formData.latitude = parseFloat(e.latlng.lat.toFixed(5));
       this.formData.longitude = parseFloat(e.latlng.lng.toFixed(5));
       this.recalculateDistance();
       this.updateSelectionPin();
-
-      if (this.isWithinRadius) {
-        this.showToast(`📍 ปักหมุดพิกัดสำเร็จ (ห่างจากศูนย์ ${this.currentDistanceKm} กม.)`, 'success');
-      } else {
-        this.showToast(`⚠️ พิกัดอยู่นอกรัศมีจัดส่ง 3.0 กม. (ห่าง ${this.currentDistanceKm} กม.)`, 'warning');
-      }
+      this.showToast(
+        this.isWithinRadius ? `📍 ปักหมุดพิกัดสำเร็จ (ห่างจากศูนย์ ${this.currentDistanceKm} กม.)` : `⚠️ พิกัดอยู่นอกรัศมีจัดส่ง 3.0 กม. (ห่าง ${this.currentDistanceKm} กม.)`,
+        this.isWithinRadius ? 'success' : 'warning'
+      );
     });
 
-    // Render current selection pin & loaded orders
     this.updateSelectionPin();
     this.renderOrderMarkers();
   }
 
   private updateSelectionPin(): void {
     if (!this.map) return;
-
-    if (this.selectionPinMarker) {
-      this.map.removeLayer(this.selectionPinMarker);
-    }
+    if (this.selectionPinMarker) this.map.removeLayer(this.selectionPinMarker);
 
     const pinColor = this.isWithinRadius ? 'bg-emerald-600' : 'bg-rose-600';
     const selectIcon = L.divIcon({
@@ -294,25 +271,15 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
 
   private renderOrderMarkers(): void {
     if (!this.map || !this.markerLayerGroup) return;
-
     this.markerLayerGroup.clearLayers();
 
-    const colorClasses: Record<OrderStatus, { bg: string; border: string }> = {
-      PENDING: { bg: 'bg-amber-500', border: 'border-amber-200' },
-      ROUTING: { bg: 'bg-indigo-600', border: 'border-indigo-200' },
-      ASSIGNED: { bg: 'bg-purple-600', border: 'border-purple-200' },
-      COMPLETED: { bg: 'bg-emerald-600', border: 'border-emerald-200' },
-      CANCELLED: { bg: 'bg-rose-500', border: 'border-rose-200' },
-    };
-
     for (const order of this.filteredOrders) {
-      const style = colorClasses[order.status] || { bg: 'bg-slate-600', border: 'border-slate-200' };
-
+      const meta = this.STATUS_META[order.status] || { bg: 'bg-slate-600', label: order.status };
       const icon = L.divIcon({
         className: 'custom-map-pin',
         html: `
           <div class="group relative flex items-center justify-center">
-            <div class="w-7 h-7 rounded-full ${style.bg} text-white flex items-center justify-center shadow-lg border-2 border-white text-xs font-bold font-mono">
+            <div class="w-7 h-7 rounded-full ${meta.bg} text-white flex items-center justify-center shadow-lg border-2 border-white text-xs font-bold font-mono">
               ${order.box_quantity}
             </div>
           </div>
@@ -321,13 +288,9 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
         iconAnchor: [14, 14],
       });
 
-      const dist = order.distance_from_depot_km != null
-        ? order.distance_from_depot_km.toFixed(2)
-        : this.calculateHaversine(this.DEPOT.lat, this.DEPOT.lng, order.latitude, order.longitude).toFixed(2);
-
+      const dist = this.getOrderDistance(order);
       const marker = L.marker([order.latitude, order.longitude], { icon });
-
-      const popupHtml = `
+      marker.bindPopup(`
         <div class="p-3 text-xs min-w-[200px]">
           <div class="flex items-center justify-between gap-2 mb-1.5">
             <span class="font-bold text-slate-900 text-sm">${order.customer_name}</span>
@@ -346,27 +309,19 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
             </button>
           </div>
         </div>
-      `;
-
-      marker.bindPopup(popupHtml);
+      `);
       this.markerLayerGroup.addLayer(marker);
     }
   }
 
-  // Map Navigation & Focus
   focusOrderOnMap(order: Order): void {
     if (!this.map) return;
     this.map.flyTo([order.latitude, order.longitude], 17, { duration: 0.8 });
-
-    // Open popup
     if (this.markerLayerGroup) {
       this.markerLayerGroup.eachLayer((layer: any) => {
         if (layer instanceof L.Marker) {
           const latlng = layer.getLatLng();
-          if (
-            Math.abs(latlng.lat - order.latitude) < 0.0001 &&
-            Math.abs(latlng.lng - order.longitude) < 0.0001
-          ) {
+          if (Math.abs(latlng.lat - order.latitude) < 0.0001 && Math.abs(latlng.lng - order.longitude) < 0.0001) {
             layer.openPopup();
           }
         }
@@ -375,43 +330,34 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   }
 
   resetMapView(): void {
-    if (!this.map) return;
-    this.map.flyTo([this.DEPOT.lat, this.DEPOT.lng], 15, { duration: 0.8 });
+    if (this.map) this.map.flyTo([this.DEPOT.lat, this.DEPOT.lng], 15, { duration: 0.8 });
   }
 
   setViewMode(mode: 'SPLIT' | 'TABLE' | 'MAP'): void {
     this.viewMode = mode;
-    setTimeout(() => {
-      if (this.map) {
-        this.map.invalidateSize();
-      }
-    }, 150);
+    setTimeout(() => this.map?.invalidateSize(), 150);
   }
 
   // ============================================================================
-  // Distance & Coordinates Calculation
+  // Distance & Calculations
   // ============================================================================
   calculateHaversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Earth's radius in km
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  getOrderDistance(order: Order): number {
+    return order.distance_from_depot_km != null
+      ? order.distance_from_depot_km
+      : parseFloat(this.calculateHaversine(this.DEPOT.lat, this.DEPOT.lng, order.latitude, order.longitude).toFixed(2));
   }
 
   recalculateDistance(): void {
-    const lat = Number(this.formData.latitude);
-    const lng = Number(this.formData.longitude);
+    const lat = Number(this.formData.latitude), lng = Number(this.formData.longitude);
     if (!isNaN(lat) && !isNaN(lng)) {
-      this.currentDistanceKm = parseFloat(
-        this.calculateHaversine(this.DEPOT.lat, this.DEPOT.lng, lat, lng).toFixed(2)
-      );
+      this.currentDistanceKm = parseFloat(this.calculateHaversine(this.DEPOT.lat, this.DEPOT.lng, lat, lng).toFixed(2));
       this.isWithinRadius = this.currentDistanceKm <= this.DEPOT.maxRadiusKm;
     }
   }
@@ -428,22 +374,14 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading = true;
     this.orderService.getOrders('ALL', this.searchTerm).subscribe({
       next: (data) => {
-        this.allOrders = data;
         this.orders = data;
         this.isLoading = false;
-
-        // Auto-index into customer directory
         for (const o of data) {
           const clean = this.normalizePhone(o.phone);
           if (!this.customerDirectory[clean]) {
-            this.customerDirectory[clean] = {
-              name: o.customer_name,
-              lat: o.latitude,
-              lng: o.longitude,
-            };
+            this.customerDirectory[clean] = { name: o.customer_name, lat: o.latitude, lng: o.longitude };
           }
         }
-
         this.renderOrderMarkers();
       },
       error: (err) => {
@@ -453,19 +391,13 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.orderService.getStats().subscribe({
-      next: (stats) => {
-        this.stats = stats;
-      },
+      next: (stats) => (this.stats = stats),
       error: (err) => console.error('Failed to load stats', err),
     });
   }
 
   get filteredOrders(): Order[] {
-    let result = this.orders;
-    if (this.selectedStatus !== 'ALL') {
-      result = result.filter((o) => o.status === this.selectedStatus);
-    }
-    return result;
+    return this.selectedStatus === 'ALL' ? this.orders : this.orders.filter((o) => o.status === this.selectedStatus);
   }
 
   setFilterStatus(status: OrderStatus | 'ALL'): void {
@@ -473,20 +405,21 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.renderOrderMarkers();
   }
 
-  onSearchChange(): void {
-    this.loadData();
-  }
-
-  clearSearch(): void {
-    this.searchTerm = '';
-    this.loadData();
-  }
+  onSearchChange(): void { this.loadData(); }
+  clearSearch(): void { this.searchTerm = ''; this.loadData(); }
 
   // ============================================================================
   // Phone Formatting & Fast Customer Lookup
   // ============================================================================
   normalizePhone(phone: string): string {
-    return phone.trim().replace(/\s+/g, '');
+    return phone.replace(/\D/g, '');
+  }
+
+  private findCustomerInDirectory(phone: string) {
+    const digits = this.normalizePhone(phone);
+    if (!digits) return null;
+    const entry = Object.entries(this.customerDirectory).find(([k]) => this.normalizePhone(k) === digits);
+    return entry ? entry[1] : null;
   }
 
   onPhoneInput(): void {
@@ -494,11 +427,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       this.existingCustomerFound = false;
       return;
     }
-
-    // Auto format phone number as 08x-xxx-xxxx
-    let digits = this.formData.phone.replace(/\D/g, '');
-    if (digits.length > 10) digits = digits.slice(0, 10);
-
+    let digits = this.normalizePhone(this.formData.phone).slice(0, 10);
     if (digits.length >= 7) {
       this.formData.phone = `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
     } else if (digits.length >= 4) {
@@ -507,57 +436,40 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       this.formData.phone = digits;
     }
 
-    // Live auto-check if customer phone matches directory
-    const clean = this.normalizePhone(this.formData.phone);
-    if (this.customerDirectory[clean]) {
-      const match = this.customerDirectory[clean];
+    const match = this.findCustomerInDirectory(this.formData.phone);
+    this.existingCustomerFound = !!match;
+    if (match) {
       this.formData.customer_name = match.name;
       this.formData.latitude = match.lat;
       this.formData.longitude = match.lng;
-      this.existingCustomerFound = true;
       this.recalculateDistance();
       this.updateSelectionPin();
-    } else {
-      this.existingCustomerFound = false;
     }
   }
 
   lookupCustomer(): void {
-    const raw = this.normalizePhone(this.formData.phone);
+    const raw = this.formData.phone.trim();
     if (!raw) {
       this.showToast('กรุณากรอกเบอร์โทรศัพท์ก่อนกดค้นหา', 'warning');
       return;
     }
-
-    let found = this.customerDirectory[raw];
-    if (!found) {
-      const digitsOnly = raw.replace(/\D/g, '');
-      const matchKey = Object.keys(this.customerDirectory).find(
-        (k) => k.replace(/\D/g, '') === digitsOnly
-      );
-      if (matchKey) {
-        found = this.customerDirectory[matchKey];
-      }
-    }
-
-    if (found) {
-      this.formData.customer_name = found.name;
-      this.formData.latitude = parseFloat(found.lat.toFixed(5));
-      this.formData.longitude = parseFloat(found.lng.toFixed(5));
+    const match = this.findCustomerInDirectory(raw);
+    if (match) {
+      this.formData.customer_name = match.name;
+      this.formData.latitude = parseFloat(match.lat.toFixed(5));
+      this.formData.longitude = parseFloat(match.lng.toFixed(5));
       this.existingCustomerFound = true;
       this.formError = '';
       this.recalculateDistance();
       this.updateSelectionPin();
-      this.showToast(`✓ พบประวัติลูกค้า: ${found.name}`, 'success');
+      this.showToast(`✓ พบประวัติลูกค้า: ${match.name}`, 'success');
     } else {
       this.existingCustomerFound = false;
       this.showToast('ไม่พบประวัติลูกค้าเก่า สามารถกรอกชื่อและพิกัดใหม่ได้ทันที', 'info');
     }
   }
 
-  setBoxQuantity(qty: number): void {
-    this.formData.box_quantity = qty;
-  }
+  setBoxQuantity(qty: number): void { this.formData.box_quantity = qty; }
 
   selectPreset(preset: MsuPreset): void {
     this.formData.customer_name = preset.name;
@@ -576,68 +488,33 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   // ============================================================================
   submitOrder(): void {
     this.formError = '';
+    const { customer_name, phone, box_quantity, latitude, longitude } = this.formData;
+    if (!phone.trim()) return void (this.formError = 'กรุณาระบุเบอร์โทรศัพท์');
+    if (!customer_name.trim()) return void (this.formError = 'กรุณาระบุชื่อลูกค้า');
+    if (box_quantity < 1 || box_quantity > 3) return void (this.formError = 'จำนวนกล่องข้าวต้องอยู่ระหว่าง 1 ถึง 3 กล่อง');
+    if (isNaN(latitude) || isNaN(longitude)) return void (this.formError = 'กรุณาระบุพิกัดละติจูดและลองจิจูดให้ถูกต้อง');
 
-    if (!this.formData.phone.trim()) {
-      this.formError = 'กรุณาระบุเบอร์โทรศัพท์';
-      return;
-    }
-    if (!this.formData.customer_name.trim()) {
-      this.formError = 'กรุณาระบุชื่อลูกค้า';
-      return;
-    }
-    if (this.formData.box_quantity < 1 || this.formData.box_quantity > 3) {
-      this.formError = 'จำนวนกล่องข้าวต้องอยู่ระหว่าง 1 ถึง 3 กล่อง';
-      return;
-    }
-    if (isNaN(this.formData.latitude) || isNaN(this.formData.longitude)) {
-      this.formError = 'กรุณาระบุพิกัดละติจูดและลองจิจูดให้ถูกต้อง';
-      return;
-    }
+    const dto = {
+      customer_name: customer_name.trim(),
+      phone: phone.trim(),
+      latitude,
+      longitude,
+      box_quantity,
+    };
 
-    if (this.isEditing && this.editingOrderId) {
-      const dto: UpdateOrderDto = {
-        customer_name: this.formData.customer_name.trim(),
-        phone: this.formData.phone.trim(),
-        latitude: this.formData.latitude,
-        longitude: this.formData.longitude,
-        box_quantity: this.formData.box_quantity,
-      };
+    const action$ = this.isEditing && this.editingOrderId
+      ? this.orderService.updateOrder(this.editingOrderId, dto)
+      : this.orderService.createOrder(dto);
 
-      this.orderService.updateOrder(this.editingOrderId, dto).subscribe({
-        next: () => {
-          this.showToast(`✓ แก้ไขออเดอร์ ${this.editingOrderId} สำเร็จ`, 'success');
-          this.resetForm();
-          this.loadData();
-        },
-        error: (err) => {
-          this.formError = err.error?.error || err.message;
-        },
-      });
-    } else {
-      const dto: CreateOrderDto = {
-        customer_name: this.formData.customer_name.trim(),
-        phone: this.formData.phone.trim(),
-        latitude: this.formData.latitude,
-        longitude: this.formData.longitude,
-        box_quantity: this.formData.box_quantity,
-      };
-
-      this.orderService.createOrder(dto).subscribe({
-        next: (created) => {
-          this.showToast(`✓ บันทึกออเดอร์ใหม่สำเร็จ (${created.id})`, 'success');
-          this.customerDirectory[this.normalizePhone(dto.phone)] = {
-            name: dto.customer_name,
-            lat: dto.latitude,
-            lng: dto.longitude,
-          };
-          this.resetForm();
-          this.loadData();
-        },
-        error: (err) => {
-          this.formError = err.error?.error || err.message;
-        },
-      });
-    }
+    action$.subscribe({
+      next: (res) => {
+        this.showToast(this.isEditing ? `✓ แก้ไขออเดอร์ ${this.editingOrderId} สำเร็จ` : `✓ บันทึกออเดอร์ใหม่สำเร็จ (${res.id})`, 'success');
+        this.customerDirectory[dto.phone] = { name: dto.customer_name, lat: dto.latitude, lng: dto.longitude };
+        this.resetForm();
+        this.loadData();
+      },
+      error: (err) => { this.formError = err.error?.error || err.message; },
+    });
   }
 
   editOrder(order: Order): void {
@@ -673,30 +550,76 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.updateSelectionPin();
   }
 
+  private recalculateStatsFromLocal(): void {
+    const total_orders = this.orders.length;
+    let total_boxes = 0;
+    let pending_orders = 0;
+    let routing_orders = 0;
+    let assigned_orders = 0;
+    let completed_orders = 0;
+    let cancelled_orders = 0;
+
+    for (const o of this.orders) {
+      if (o.status !== 'CANCELLED') {
+        total_boxes += o.box_quantity;
+      }
+      switch (o.status) {
+        case 'PENDING': pending_orders++; break;
+        case 'ROUTING': routing_orders++; break;
+        case 'ASSIGNED': assigned_orders++; break;
+        case 'COMPLETED': completed_orders++; break;
+        case 'CANCELLED': cancelled_orders++; break;
+      }
+    }
+
+    const total_revenue_thb = total_boxes * this.DEPOT.boxPriceThb;
+    const total_cost_thb = total_boxes * this.DEPOT.boxCostThb;
+
+    this.stats = {
+      total_orders,
+      total_boxes,
+      pending_orders,
+      routing_orders,
+      assigned_orders,
+      completed_orders,
+      cancelled_orders,
+      total_revenue_thb,
+      total_cost_thb,
+      gross_profit_thb: total_revenue_thb - total_cost_thb,
+    };
+  }
+
   cancelOrder(order: Order): void {
+    const target = this.orders.find((o) => o.id === order.id);
+    if (target) target.status = 'CANCELLED';
+    this.recalculateStatsFromLocal();
+    this.renderOrderMarkers();
+    this.showToast(`ยกเลิกออเดอร์ ${order.id} แล้ว`, 'info');
+    this.cdr.detectChanges();
+
     this.orderService.cancelOrder(order.id).subscribe({
-      next: () => {
-        this.showToast(`ยกเลิกออเดอร์ ${order.id} แล้ว`, 'info');
-        this.loadData();
-      },
+      next: () => {},
       error: (err) => {
         this.showToast('ยกเลิกไม่สำเร็จ: ' + (err.error?.error || err.message), 'error');
+        this.loadData();
       },
     });
   }
 
   deleteOrder(order: Order): void {
     if (confirm(`คุณต้องการลบออเดอร์ของ "${order.customer_name}" ออกจากระบบหรือไม่?`)) {
+      this.orders = this.orders.filter((o) => o.id !== order.id);
+      this.recalculateStatsFromLocal();
+      this.renderOrderMarkers();
+      if (this.editingOrderId === order.id) this.resetForm();
+      this.showToast(`ลบออเดอร์สำเร็จ`, 'info');
+      this.cdr.detectChanges();
+
       this.orderService.deleteOrder(order.id).subscribe({
-        next: () => {
-          this.showToast(`ลบออเดอร์สำเร็จ`, 'info');
-          if (this.editingOrderId === order.id) {
-            this.resetForm();
-          }
-          this.loadData();
-        },
+        next: () => {},
         error: (err) => {
           this.showToast('ลบออเดอร์ไม่สำเร็จ: ' + (err.error?.error || err.message), 'error');
+          this.loadData();
         },
       });
     }
@@ -722,25 +645,46 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
 
   openResetConfirm(): void {
     this.isResetConfirmOpen = true;
+    this.isResetting = false;
+    this.cdr.detectChanges();
   }
 
   closeResetConfirm(): void {
     this.isResetConfirmOpen = false;
+    this.isResetting = false;
+    this.cdr.detectChanges();
   }
 
   confirmResetAll(): void {
-    this.isResetting = true;
+    // 1. ปิด Modal ทันที ไม่ให้ค้างอยู่บนหน้าจอเด็ดขาด
+    this.isResetConfirmOpen = false;
+    this.isResetting = false;
+
+    // 2. ล้างข้อมูลหน้าจอทันทีแบบ Real-time
+    this.orders = [];
+    this.stats = {
+      total_orders: 0,
+      total_boxes: 0,
+      pending_orders: 0,
+      routing_orders: 0,
+      assigned_orders: 0,
+      completed_orders: 0,
+      cancelled_orders: 0,
+      total_revenue_thb: 0,
+      total_cost_thb: 0,
+      gross_profit_thb: 0,
+    };
+    this.markerLayerGroup?.clearLayers();
+    this.resetForm();
+    this.showToast('🗑️ ล้างข้อมูลออเดอร์ทั้งหมดเรียบร้อยแล้ว', 'info');
+    this.cdr.detectChanges();
+
+    // 3. ส่งคำขอลบไปยัง Server ในเบื้องหลัง
     this.orderService.resetAllOrders().subscribe({
-      next: () => {
-        this.isResetting = false;
-        this.isResetConfirmOpen = false;
-        this.showToast('🗑️ ล้างข้อมูลออเดอร์ทั้งหมดเรียบร้อยแล้ว', 'info');
-        this.resetForm();
-        this.loadData();
-      },
+      next: () => {},
       error: (err) => {
-        this.isResetting = false;
         this.showToast('ล้างข้อมูลล้มเหลว: ' + (err.error?.error || err.message), 'error');
+        this.loadData();
       },
     });
   }
@@ -753,18 +697,12 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       this.showToast('ไม่มีรายการออเดอร์สำหรับจัดเส้นทาง', 'warning');
       return;
     }
-
     this.isRoutingTriggering = true;
     this.orderService.triggerRouting().subscribe({
       next: (result) => {
         this.isRoutingTriggering = false;
-        this.lastRoutingResult = result;
         this.showToast(`🚀 ส่งออเดอร์เข้าสู่ระบบ CVRPTW สำเร็จ! (${result.total_orders_routed} รายการ)`, 'success');
-        setTimeout(() => {
-          this.router.navigate(['/routes'], {
-            queryParams: { jobId: result.job_id },
-          });
-        }, 600);
+        setTimeout(() => this.router.navigate(['/routes'], { queryParams: { jobId: result.job_id } }), 600);
       },
       error: (err) => {
         this.isRoutingTriggering = false;
@@ -781,43 +719,18 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info'): void {
     const id = ++this.toastCounter;
     this.toasts.push({ id, message, type });
-    setTimeout(() => {
-      this.toasts = this.toasts.filter((t) => t.id !== id);
-    }, 4000);
+    setTimeout(() => (this.toasts = this.toasts.filter((t) => t.id !== id)), 4000);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter((t) => t.id !== id);
-  }
-
-  openMapPinModal(): void {
-    this.isMapPinModalOpen = true;
-  }
-
-  closeMapPinModal(): void {
-    this.isMapPinModalOpen = false;
-  }
+  removeToast(id: number): void { this.toasts = this.toasts.filter((t) => t.id !== id); }
+  openMapPinModal(): void { this.isMapPinModalOpen = true; }
+  closeMapPinModal(): void { this.isMapPinModalOpen = false; }
 
   getStatusLabel(status: OrderStatus): string {
-    switch (status) {
-      case 'PENDING': return 'รอจัดเส้นทาง';
-      case 'ROUTING': return 'กำลังจัดเส้นทาง';
-      case 'ASSIGNED': return 'มอบหมายแล้ว';
-      case 'COMPLETED': return 'จัดส่งสำเร็จ';
-      case 'CANCELLED': return 'ยกเลิกแล้ว';
-      default: return status;
-    }
+    return this.STATUS_META[status]?.label ?? status;
   }
 
   getStatusBadgeClass(status: OrderStatus): string {
-    switch (status) {
-      case 'PENDING': return 'status-pill-pending';
-      case 'ROUTING': return 'status-pill-routing';
-      case 'ASSIGNED': return 'status-pill-assigned';
-      case 'COMPLETED': return 'status-pill-completed';
-      case 'CANCELLED': return 'status-pill-cancelled';
-      default: return 'bg-slate-100 text-slate-700';
-    }
+    return this.STATUS_META[status]?.badge ?? 'bg-slate-100 text-slate-700';
   }
 }
-

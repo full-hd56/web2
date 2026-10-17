@@ -85,7 +85,7 @@ interface NavItem {
 
       <!-- Footer -->
       <div class="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
-        <span>Antigravity Dispatch v2.0</span>
+        
         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
       </div>
     </aside>
