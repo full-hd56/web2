@@ -20,7 +20,7 @@ export class OrderService {
 
   private get rootUrl(): string {
     const clean = this.baseUrl.replace(/\/+$/, '');
-    return clean.endsWith('/api/v1') ? clean : `${clean}/api/v1`;
+    return clean.endsWith('/api') ? clean : `${clean}/api`;
   }
   private get ordersUrl(): string {
     return `${this.rootUrl}/orders`;
