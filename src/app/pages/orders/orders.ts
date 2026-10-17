@@ -1,4 +1,4 @@
-import { Sidebar } from '../sidebar/sidebar';
+import { Sidebar } from '../../components/sidebar/sidebar';
 import { Component, OnInit, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -30,13 +30,13 @@ interface MsuPreset {
 }
 
 @Component({
-  selector: 'app-order-management',
+  selector: 'app-orders',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, Sidebar],
-  templateUrl: './order-management.html',
-  styleUrls: ['./order-management.css'],
+  templateUrl: './orders.html',
+  styleUrl: './orders.css',
 })
-export class OrderManagementComponent implements OnInit, AfterViewInit, OnDestroy {
+export class Orders implements OnInit, AfterViewInit, OnDestroy {
   private orderService = inject(OrderService);
   private router = inject(Router);
 

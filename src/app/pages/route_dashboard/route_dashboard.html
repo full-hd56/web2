@@ -1,0 +1,302 @@
+<div class="flex min-h-screen bg-slate-50 font-sans antialiased text-slate-800 selection:bg-amber-500 selection:text-white">
+  
+  <app-sidebar [routesBadge]="riders.length + ' คัน'" />
+
+  <!-- ================================================================== -->
+  <!-- MAIN WORKSPACE CONTENT AREA                                        -->
+  <!-- ================================================================== -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    
+    <!-- Top Header Navigation Bar -->
+    <header class="bg-white border-b border-slate-200/90 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+      <div class="flex items-center gap-3">
+        <a
+          routerLink="/orders"
+          class="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 text-xs font-semibold"
+        >
+          <span>← กลับหน้าออเดอร์</span>
+        </a>
+
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              จัดสรรเส้นทางและแบ่งงานไรเดอร์ (CVRPTW Engine)
+            </h2>
+            @if (jobId) {
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                Job: {{ jobId }}
+              </span>
+            }
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+            ระบบคำนวณคลัสเตอร์เส้นทางที่ดีที่สุดตามกรอบเวลา 11:30 - 12:30 น. (คันละไม่เกิน 10 กล่อง)
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="printAllManifests()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 shadow-xs transition active:scale-95"
+        >
+          🖨️ พิมพ์ใบนำส่งสินค้า
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Body -->
+    <div class="p-6 lg:p-8 space-y-6">
+      
+      <!-- Dispatch Pipeline Stepper -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          ลำดับขั้นตอนการปฏิบัติการรอบเที่ยง (Dispatch Lifecycle)
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">✓</span>
+            <div>
+              <div class="font-bold text-xs">1. รวบรวมออเดอร์</div>
+              <div class="text-[11px] text-emerald-700">11:00 - 11:30 น. (เสร็จสิ้น)</div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">🚀</span>
+            <div>
+              <div class="font-bold text-xs">2. CVRPTW Engine</div>
+              <div class="text-[11px] text-blue-700">แบ่งกลุ่ม & จัดลำดับจุดส่ง</div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 animate-pulse">📦</span>
+            <div>
+              <div class="font-bold text-xs">3. บรรจุกล่องข้าว</div>
+              <div class="text-[11px] text-amber-700">11:30 - 11:45 น. (กำลังทำ)</div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">🛵</span>
+            <div>
+              <div class="font-bold text-xs">4. กระจายส่งรอบ มมส.</div>
+              <div class="text-[11px] text-slate-500">11:45 - 12:30 น. (พร้อมวิ่ง)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Fleet KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl p-4.5 border border-slate-200/90 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">ไรเดอร์ปฏิบัติการ</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-slate-900 font-mono">{{ riders.length }}</span>
+            <span class="text-xs text-slate-500">คัน (ไม่เกิน 10 กล่อง/คัน)</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4.5 border border-slate-200/90 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">ข้าวกล่องที่กระจายส่ง</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-orange-600 font-mono">{{ totalBoxesRouted }}</span>
+            <span class="text-xs text-slate-500">กล่อง</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4.5 border border-slate-200/90 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">ระยะทางรวมทุกเส้นทาง</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-indigo-600 font-mono">{{ totalFleetDistanceKm.toFixed(1) }}</span>
+            <span class="text-xs text-slate-500">กิโลเมตร</span>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4.5 border border-slate-200/90 shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">อัตราส่งทันเวลาคาดการณ์</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-emerald-600 font-mono">100%</span>
+            <span class="text-xs text-slate-500">ก่อน 12:30 น.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Route Map -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2 font-bold">
+            <span>🗺️</span>
+            <span>แผนที่เส้นทางจัดส่งอาหารกลางวัน (CVRPTW Routes Map)</span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-1 bg-amber-500 rounded"></span> ไรเดอร์ 01</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-1 bg-indigo-500 rounded"></span> ไรเดอร์ 02</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-1 bg-purple-500 rounded"></span> ไรเดอร์ 03</span>
+          </div>
+        </div>
+
+        <!-- Leaflet Map Container -->
+        <div id="routeMap" style="height: 380px;" class="w-full"></div>
+      </div>
+
+      <!-- Rider Allocation Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        @for (rider of riders; track rider.id; let rIdx = $index) {
+          <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col justify-between">
+            
+            <div class="p-5">
+              <!-- Card Header -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-sm" [style.background-color]="rider.color">
+                    🛵
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-900 text-sm">{{ rider.name }}</h4>
+                    <div class="text-[11px] text-slate-500 font-mono">{{ rider.plateNumber }} · {{ rider.phone }}</div>
+                  </div>
+                </div>
+
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  พร้อมส่ง
+                </span>
+              </div>
+
+              <!-- Zone & Capacity -->
+              <div class="mb-4">
+                <div class="text-xs text-slate-600 font-medium mb-1.5 flex items-center justify-between">
+                  <span>โซนจัดส่ง: <strong>{{ rider.zone }}</strong></span>
+                  <span class="font-mono text-amber-700 font-bold">{{ rider.totalBoxes }} / {{ rider.maxBoxes }} กล่อง</span>
+                </div>
+
+                <!-- Progress Bar (10 Boxes Max) -->
+                <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    [style.width.%]="(rider.totalBoxes / rider.maxBoxes) * 100"
+                    [style.background-color]="rider.color"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Stops Sequence Timeline -->
+              <div class="space-y-2 pt-3 border-t border-slate-100">
+                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  ลำดับจุดส่งมอบ ({{ rider.orders.length }} จุดส่ง):
+                </div>
+
+                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  @for (order of rider.orders; track order.id; let sIdx = $index) {
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-white text-slate-700 border border-slate-300 flex items-center justify-center font-bold text-[10px] shrink-0 font-mono">
+                          {{ sIdx + 1 }}
+                        </span>
+                        <div>
+                          <div class="font-bold text-slate-800">{{ order.customer_name }}</div>
+                          <div class="text-[10px] text-slate-400 font-mono">{{ order.phone }}</div>
+                        </div>
+                      </div>
+                      <span class="font-bold text-orange-600 font-mono shrink-0">
+                        {{ order.box_quantity }} กล่อง
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer Actions -->
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div class="text-slate-500">
+                ประมาณการ: <strong class="text-slate-900">{{ rider.estimatedTime }}</strong>
+              </div>
+              <button
+                type="button"
+                (click)="focusRider(rider)"
+                class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold transition"
+              >
+                🔍 ดูบนแผนที่
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Bottom Navigation Bar -->
+      <div class="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between text-xs text-slate-600">
+        <span>ข้อมูลไรเดอร์ทั้งหมดคำนวณและปรับตามรายการออเดอร์ในหน้าจอที่ 1 อัตโนมัติ</span>
+        <a routerLink="/orders" class="font-bold text-amber-600 hover:text-amber-800 transition">
+          ← กลับไปตรวจเช็กออเดอร์หน้าร้าน
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Manifest Print Preview Modal -->
+  @if (isPrintModalOpen) {
+    <div class="modal-backdrop-custom">
+      <div class="modal-content-animated bg-white w-full max-w-2xl p-6 rounded-2xl border border-slate-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h3 class="font-bold text-slate-900 text-base">
+            ใบนำส่งอาหารกลางวัน (Delivery Manifest)
+          </h3>
+          <button (click)="isPrintModalOpen = false" class="text-slate-400 hover:text-slate-900 font-bold">✕</button>
+        </div>
+
+        <div class="space-y-6">
+          @for (rider of riders; track rider.id) {
+            <div class="border border-slate-200 rounded-xl p-4">
+              <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                <span class="font-bold text-sm text-slate-900">{{ rider.name }} ({{ rider.plateNumber }})</span>
+                <span class="text-xs font-mono font-bold text-orange-600">ยอดรวม: {{ rider.totalBoxes }} กล่อง</span>
+              </div>
+
+              <table class="w-full text-xs text-left">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="p-2">#</th>
+                    <th class="p-2">ลูกค้า</th>
+                    <th class="p-2">เบอร์โทร</th>
+                    <th class="p-2 text-center">กล่อง</th>
+                    <th class="p-2 text-right">ยอดเก็บเงิน</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  @for (order of rider.orders; track order.id; let oIdx = $index) {
+                    <tr>
+                      <td class="p-2 font-mono">{{ oIdx + 1 }}</td>
+                      <td class="p-2 font-semibold">{{ order.customer_name }}</td>
+                      <td class="p-2 font-mono">{{ order.phone }}</td>
+                      <td class="p-2 text-center font-bold text-orange-600">{{ order.box_quantity }}</td>
+                      <td class="p-2 text-right font-mono font-bold">฿{{ order.box_quantity * 65 }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <div class="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="isPrintModalOpen = false"
+            class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
+          >
+            ปิด
+          </button>
+          <button
+            type="button"
+            (click)="confirmPrint()"
+            class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold"
+          >
+            🖨️ พิมพ์ออกทางเครื่องพิมพ์
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -101,7 +101,7 @@ export class Sidebar implements OnInit, OnDestroy {
   readonly navItems: NavItem[] = [
     { path: '/orders', label: 'จัดการออเดอร์', icon: '📋' },
     { path: '/routes', label: 'จัดเส้นทางไรเดอร์', icon: '🗺️' },
-    { path: '/rider-settings', label: 'ไรเดอร์และตั้งค่า', icon: '⚙️' },
+    { path: '/customers', label: 'จัดการลูกค้า', icon: '👥' },
     { path: '/rider', label: 'มุมมองไรเดอร์ (Rider)', icon: '🛵' },
   ];
 
