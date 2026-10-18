@@ -155,6 +155,10 @@
                       class="p-1.5 rounded-lg hover:bg-amber-100 hover:text-amber-800 transition" title="แก้ไขลูกค้า">
                       <span class="icon" aria-hidden="true">edit</span>
                     </button>
+                    <button type="button" (click)="deleteCustomer(c.id)"
+                      class="p-1.5 rounded-lg hover:bg-rose-100 hover:text-rose-800 transition" title="ลบลูกค้า">
+                      <span class="icon" aria-hidden="true">delete</span>
+                    </button>
                   </td>
                 </tr>
               }

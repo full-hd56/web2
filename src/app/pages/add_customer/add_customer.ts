@@ -2,6 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, signal } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 import { Sidebar } from '../../components/sidebar/sidebar';
 import * as L from 'leaflet';
 
@@ -202,6 +203,15 @@ export class AddCustomer implements OnInit, AfterViewInit, OnDestroy {
     this.editingId.set(null);
     this.form.set(this.empty_form());
     this.removePin();
+  }
+
+  // ลบลูกค้า (DELETE /customer/:id)
+  async deleteCustomer(id: number) {
+    if (!confirm('ต้องการลบลูกค้าคนนี้ใช่ไหม?')) return;
+    await lastValueFrom(
+      this.http.delete(`${API_URL}/customer/${id}`),
+    );
+    this.loadCustomers();
   }
 
   // ใช้พิกัดจาก GPS ของเครื่อง (เบราว์เซอร์จะขออนุญาตก่อน)
