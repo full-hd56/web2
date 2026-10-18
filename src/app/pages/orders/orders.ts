@@ -45,7 +45,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   //เพิ่ม order  //dropdown ลูกค้า
   private http = inject(HttpClient);
   customers: Customer[] = [];
-  selectedCustomerId: number | null = null;
+  selected_customer_id_dropdown: number | null = null;
 
   //*********************** */
 
@@ -206,7 +206,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
 
   // เลือกลูกค้าจาก dropdown แล้วเติมข้อมูลลงฟอร์มให้อัตโนมัติ
   customer_select(): void {
-    const c = this.customers.find((x) => x.id === Number(this.selectedCustomerId));
+    const c = this.customers.find((x) => x.id === Number(this.selected_customer_id_dropdown));
     if (!c) return;
     this.formData.customer_name = c.name;
     this.formData.phone = c.phone;
@@ -584,14 +584,16 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     const { customer_name, phone, box_quantity, latitude, longitude } = this.formData;
 
     ////////// dropdown/////////////////
-    if (!phone.trim()) return void (this.formError = 'กรุณาเลือกลูกค้า');
+    //if (!phone.trim()) return void (this.formError = 'กรุณาเลือกลูกค้า');
+    if (!this.selected_customer_id_dropdown) return void (this.formError = 'กรุณาเลือกลูกค้า');
     ////////// ///////////////////////
 
     if (!customer_name.trim()) return void (this.formError = 'กรุณาระบุชื่อลูกค้า');
     if (box_quantity < 1 || box_quantity > 3) return void (this.formError = 'จำนวนกล่องข้าวต้องอยู่ระหว่าง 1 ถึง 3 กล่อง');
     if (isNaN(latitude) || isNaN(longitude)) return void (this.formError = 'กรุณาระบุพิกัดละติจูดและลองจิจูดให้ถูกต้อง');
 
-    const dto = {
+    const order_data = {
+      customer_id: this.selected_customer_id_dropdown,   // แก้ dropdown
       customer_name: customer_name.trim(),
       phone: phone.trim(),
       latitude,
@@ -600,13 +602,13 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     };
 
     const action$ = this.isEditing && this.editingOrderId
-      ? this.orderService.updateOrder(this.editingOrderId, dto)
-      : this.orderService.createOrder(dto);
+      ? this.orderService.updateOrder(this.editingOrderId, order_data)
+      : this.orderService.createOrder(order_data);
 
     action$.subscribe({
       next: (res) => {
         this.showToast(this.isEditing ? `✓ แก้ไขออเดอร์ ${this.editingOrderId} สำเร็จ` : `✓ บันทึกออเดอร์ใหม่สำเร็จ (${res.id})`, 'success');
-        this.customerDirectory[dto.phone] = { name: dto.customer_name, lat: dto.latitude, lng: dto.longitude };
+        this.customerDirectory[order_data.phone] = { name: order_data.customer_name, lat: order_data.latitude, lng: order_data.longitude };
         this.resetForm();
         this.loadData();
       },
@@ -619,7 +621,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.editingOrderId = order.id;
 
     ////////////  dropdown
-    this.selectedCustomerId = this.customers.find((c) => c.phone === order.phone)?.id ?? null;
+    this.selected_customer_id_dropdown = this.customers.find((c) => c.phone === order.phone)?.id ?? null;
     ///////////
 
     this.formData = {
@@ -641,7 +643,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.editingOrderId = '';
 
     /// dropdown ////
-    this.selectedCustomerId = null;
+    this.selected_customer_id_dropdown = null;
     /////////////////
 
     this.formData = {

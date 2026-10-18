@@ -13,7 +13,8 @@ export interface Order {
   distance_from_depot_km?: number;
 }
 
-export interface CreateOrderDto {
+export interface create_order { //DTO ย่อมาจาก Data Transfer Object แปลว่า "หน้าตาของข้อมูลที่ส่งไปหา backend" ครับ
+  customer_id: number | null;     // ← เพิ่ม
   customer_name: string;
   phone: string;
   latitude: number;
@@ -21,7 +22,8 @@ export interface CreateOrderDto {
   box_quantity: number;
 }
 
-export interface UpdateOrderDto {
+export interface update_order {
+  customer_id: number | null;     // ← เพิ่ม
   customer_name?: string;
   phone?: string;
   latitude?: number;

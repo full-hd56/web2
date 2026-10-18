@@ -6,8 +6,8 @@ import {
   Order,
   OrderStatus,
   OrderStats,
-  CreateOrderDto,
-  UpdateOrderDto,
+  create_order,
+  update_order,
   RoutingTriggerResult,
   ApiResponse,
 } from '../models/order';
@@ -43,12 +43,12 @@ export class OrderService {
     return this.http.get<ApiResponse<OrderStats>>(`${this.ordersUrl}/stats`).pipe(map((res) => res.data));
   }
 
-  createOrder(dto: CreateOrderDto): Observable<Order> {
-    return this.http.post<ApiResponse<Order>>(this.ordersUrl, dto).pipe(map((res) => res.data));
+  createOrder(new_order: create_order): Observable<Order> {
+    return this.http.post<ApiResponse<Order>>(this.ordersUrl, new_order).pipe(map((res) => res.data));
   }
 
-  updateOrder(id: string, dto: UpdateOrderDto): Observable<Order> {
-    return this.http.put<ApiResponse<Order>>(`${this.ordersUrl}/${id}`, dto).pipe(map((res) => res.data));
+  updateOrder(id: string, update_order: update_order): Observable<Order> {
+    return this.http.put<ApiResponse<Order>>(`${this.ordersUrl}/${id}`, update_order).pipe(map((res) => res.data));
   }
 
   cancelOrder(id: string): Observable<Order> {
