@@ -208,10 +208,19 @@ export class AddCustomer implements OnInit, AfterViewInit, OnDestroy {
   // ลบลูกค้า (DELETE /customer/:id)
   async deleteCustomer(id: number) {
     if (!confirm('ต้องการลบลูกค้าคนนี้ใช่ไหม?')) return;
-    await lastValueFrom(
-      this.http.delete(`${API_URL}/customer/${id}`),
-    );
-    this.loadCustomers();
+    this.formError.set('');
+    this.successMsg.set('');
+    try {
+      await lastValueFrom(
+        this.http.delete(`${API_URL}/customer/${id}`),
+      );
+      if (this.editingId() === id) this.cancelEdit(); // ถ้ากำลังแก้ไขคนนี้อยู่ ให้ล้างฟอร์ม
+      this.successMsg.set('ลบลูกค้าเรียบร้อย');
+      this.loadCustomers();
+    } catch (err: any) {
+      // แสดง error บนหน้าจอ เช่น 404 = backend ยังไม่มี route ลบ หรือไม่พบลูกค้า
+      this.formError.set('ลบไม่สำเร็จ (' + err.status + '): ' + (err.error?.error ?? err.message));
+    }
   }
 
   // ใช้พิกัดจาก GPS ของเครื่อง (เบราว์เซอร์จะขออนุญาตก่อน)
