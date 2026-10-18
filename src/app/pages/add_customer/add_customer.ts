@@ -93,7 +93,7 @@ export class AddCustomer implements OnInit, AfterViewInit, OnDestroy {
     if (!this.pin) {
       const icon = L.divIcon({
         className: '',
-        html: '<div style="font-size:30px;line-height:30px;transform:translate(-50%,-100%)">📍</div>',
+        html: '<span class="icon icon-fill" style="font-size:38px;color:#e11d48;display:block;transform:translate(-50%,-100%);text-shadow:0 2px 4px rgba(0,0,0,.25)">location_on</span>',
         iconSize: [0, 0],
       });
       this.pin = L.marker([lat, lng], { icon, draggable: true }).addTo(this.map);

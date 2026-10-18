@@ -14,7 +14,7 @@
       <div class="flex items-center gap-3">
         <a routerLink="/orders"
           class="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 text-xs font-semibold">
-          <span>← กลับหน้าออเดอร์</span>
+          <span><span class="icon" aria-hidden="true">arrow_back</span> กลับหน้าออเดอร์</span>
         </a>
 
         <div>
@@ -38,7 +38,7 @@
       <div class="flex items-center gap-2">
         <button type="button" (click)="printAllManifests()"
           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 shadow-xs transition active:scale-95">
-          🖨️ พิมพ์ใบนำส่งสินค้า
+          <span class="icon" aria-hidden="true">print</span> พิมพ์ใบนำส่งสินค้า
         </button>
       </div>
     </header>
@@ -85,7 +85,7 @@
       <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between text-xs">
           <div class="flex items-center gap-2 font-bold">
-            <span>🗺️</span>
+            <span><span class="icon" aria-hidden="true">map</span></span>
             <span>แผนที่เส้นทางจัดส่งอาหารกลางวัน (CVRPTW Routes Map)</span>
           </div>
           <div class="flex items-center gap-3 text-[11px] text-slate-400">
@@ -114,7 +114,7 @@
                 <div
                   class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-sm"
                   [style.background-color]="deliveryTask.color">
-                  🛵
+                  <span class="icon" aria-hidden="true">moped</span>
                 </div>
                 <div>
                   <h4 class="font-bold text-slate-900 text-sm">{{ deliveryTask.name }}</h4>
@@ -186,7 +186,7 @@
             </div>
             <button type="button" (click)="focusDeliveryTask(deliveryTask)"
               class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold transition">
-              🔍 ดูบนแผนที่
+              <span class="icon" aria-hidden="true">search</span> ดูบนแผนที่
             </button>
           </div>
         </div>
@@ -198,7 +198,7 @@
         class="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between text-xs text-slate-600">
         <span>ข้อมูลไรเดอร์ทั้งหมดคำนวณและปรับตามรายการออเดอร์ในหน้าจอที่ 1 อัตโนมัติ</span>
         <a routerLink="/orders" class="font-bold text-amber-600 hover:text-amber-800 transition">
-          ← กลับไปตรวจเช็กออเดอร์หน้าร้าน
+          <span class="icon" aria-hidden="true">arrow_back</span> กลับไปตรวจเช็กออเดอร์หน้าร้าน
         </a>
       </div>
     </div>
@@ -213,7 +213,7 @@
         <h3 class="font-bold text-slate-900 text-base">
           ใบนำส่งอาหารกลางวัน (Delivery Manifest)
         </h3>
-        <button (click)="isPrintModalOpen = false" class="text-slate-400 hover:text-slate-900 font-bold">✕</button>
+        <button (click)="isPrintModalOpen = false" class="text-slate-400 hover:text-slate-900 font-bold"><span class="icon" aria-hidden="true">close</span></button>
       </div>
 
       <div class="space-y-6">
@@ -257,7 +257,7 @@
         </button>
         <button type="button" (click)="confirmPrint()"
           class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold">
-          🖨️ พิมพ์ออกทางเครื่องพิมพ์
+          <span class="icon" aria-hidden="true">print</span> พิมพ์ออกทางเครื่องพิมพ์
         </button>
       </div>
     </div>

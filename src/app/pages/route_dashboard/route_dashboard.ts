@@ -279,7 +279,7 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
         <div class="relative flex items-center justify-center">
           <span class="absolute w-10 h-10 rounded-full bg-orange-500/30 animate-ping"></span>
           <div class="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg border-2 border-white font-bold text-xs">
-            🍱
+            <span class="icon" aria-hidden="true">bento</span>
           </div>
         </div>
       `,
@@ -288,7 +288,7 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
 
     L.marker([this.DEPOT.lat, this.DEPOT.lng], { icon: depotIcon })
-      .bindPopup(`<div class="p-2 font-bold text-xs">🏢 ${this.DEPOT.name} (ศูนย์ต้นทาง)</div>`)
+      .bindPopup(`<div class="p-2 font-bold text-xs"><span class="icon" aria-hidden="true">warehouse</span> ${this.DEPOT.name} (ศูนย์ต้นทาง)</div>`)
       .addTo(this.map);
 
     this.routeLayers = L.layerGroup().addTo(this.map);
@@ -332,8 +332,8 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
           .bindPopup(`
             <div class="p-2.5 text-xs">
               <div class="font-bold text-slate-900">${order.customer_name}</div>
-              <div class="text-slate-500 font-mono">📞 ${order.phone}</div>
-              <div class="text-orange-600 font-bold mt-1">🍱 ${order.box_quantity} กล่อง</div>
+              <div class="text-slate-500 font-mono"><span class="icon" aria-hidden="true">call</span> ${order.phone}</div>
+              <div class="text-orange-600 font-bold mt-1"><span class="icon" aria-hidden="true">bento</span> ${order.box_quantity} กล่อง</div>
               <div class="text-slate-400 text-[10px] mt-1">ไรเดอร์: ${delivery_task.name} (ลำดับที่ ${sIdx + 1})</div>
             </div>
           `)
