@@ -235,7 +235,7 @@
             <!-- เลือกลูกค้า  dropdown-->
             <div>
               <label>ลูกค้า</label>
-              <select [(ngModel)]="selected_customer_id_dropdown" (ngModelChange)="customer_select()" name="customer"
+              <select [(ngModel)]="selectedCustomerId" (ngModelChange)="customer_select()" name="customer"
                 class="w-full border rounded p-2">
                 <option [ngValue]="null" disabled>-- เลือกลูกค้า --</option>
                 @for (c of customers; track c.id) {
