@@ -168,6 +168,7 @@
 
 /* Google Material Symbols — ใช้ <span class="icon">ชื่อไอคอน</span>
    ดูชื่อไอคอนได้ที่ https://fonts.google.com/icons */
+@layer components {
 .icon {
   font-family: 'Material Symbols Rounded';
   font-weight: normal;
@@ -187,3 +188,4 @@
   flex-shrink: 0;
 }
 .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+}
