@@ -7,11 +7,12 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import * as L from 'leaflet';
 import { OrderService } from '../../services/order';
-import {
-  Order,
-  OrderStatus,
-  OrderStats,
-} from '../../models/order';
+import { Order, OrderStatus, OrderStats } from '../../models/order';
+
+
+import { HttpClient } from '@angular/common/http';
+import { Customer } from '../../models/customer';
+
 
 interface Toast {
   id: number;
@@ -39,6 +40,14 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   private orderService = inject(OrderService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+
+  //******************** */
+  //เพิ่ม order  //dropdown ลูกค้า
+  private http = inject(HttpClient);
+  customers: Customer[] = [];
+  selectedCustomerId: number | null = null;
+
+  //*********************** */
 
   // Depot Info (MSU Khamriang)
   readonly DEPOT = {
@@ -172,7 +181,41 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       });
     window.addEventListener('edit-order-event', this.onCustomEdit);
     window.addEventListener('cancel-order-event', this.onCustomCancel);
+
+    ///////////////////////////
+    //dropdown customer
+    this.load_customers();
+    //////////////////////////
+
   }
+  /////////////////
+  //dropdown
+  // ดึงรายชื่อลูกค้าทั้งหมดจาก database
+  load_customers(): void {
+    this.http.get<Customer[]>('https://back-n-web2.vercel.app/customer').subscribe({
+      next: (data) => {
+        this.customers = data;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.formError = 'โหลดรายชื่อลูกค้าไม่สำเร็จ';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  // เลือกลูกค้าจาก dropdown แล้วเติมข้อมูลลงฟอร์มให้อัตโนมัติ
+  customer_select(): void {
+    const c = this.customers.find((x) => x.id === Number(this.selectedCustomerId));
+    if (!c) return;
+    this.formData.customer_name = c.name;
+    this.formData.phone = c.phone;
+    this.formData.latitude = Number(c.latitude);
+    this.formData.longitude = Number(c.longitude);
+    this.recalculateDistance();
+    this.updateSelectionPin();
+  }
+  ///////////////////////////////////////////
 
   ngAfterViewInit(): void {
     if (this.viewMode !== 'TABLE') {
@@ -539,7 +582,11 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   submitOrder(): void {
     this.formError = '';
     const { customer_name, phone, box_quantity, latitude, longitude } = this.formData;
-    if (!phone.trim()) return void (this.formError = 'กรุณาระบุเบอร์โทรศัพท์');
+
+    ////////// dropdown/////////////////
+    if (!phone.trim()) return void (this.formError = 'กรุณาเลือกลูกค้า');
+    ////////// ///////////////////////
+
     if (!customer_name.trim()) return void (this.formError = 'กรุณาระบุชื่อลูกค้า');
     if (box_quantity < 1 || box_quantity > 3) return void (this.formError = 'จำนวนกล่องข้าวต้องอยู่ระหว่าง 1 ถึง 3 กล่อง');
     if (isNaN(latitude) || isNaN(longitude)) return void (this.formError = 'กรุณาระบุพิกัดละติจูดและลองจิจูดให้ถูกต้อง');
@@ -570,6 +617,11 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   editOrder(order: Order): void {
     this.isEditing = true;
     this.editingOrderId = order.id;
+
+    ////////////  dropdown
+    this.selectedCustomerId = this.customers.find((c) => c.phone === order.phone)?.id ?? null;
+    ///////////
+
     this.formData = {
       customer_name: order.customer_name,
       phone: order.phone,
@@ -587,6 +639,11 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   resetForm(): void {
     this.isEditing = false;
     this.editingOrderId = '';
+
+    /// dropdown ////
+    this.selectedCustomerId = null;
+    /////////////////
+
     this.formData = {
       customer_name: '',
       phone: '',

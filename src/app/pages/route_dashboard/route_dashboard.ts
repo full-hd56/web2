@@ -8,6 +8,8 @@ import { Order, OrderStats } from '../../models/order';
 
 
 
+
+
 interface delivery_task_route {
   id: string;
   name: string;
@@ -31,6 +33,13 @@ interface delivery_task_route {
 export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private orderService = inject(OrderService);
+
+
+  //******************** */
+  //เพิ่ม order
+  selectedCustomerId: number | null = null;
+
+  //*********************** */
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   // เงื่อนไขจากเอกสาร: ไรเดอร์ 1 คน รับไม่เกิน 3 ออเดอร์
@@ -137,6 +146,8 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.map = null;
     }
   }
+
+  
 
   private updateClock(): void {
     const now = new Date();
