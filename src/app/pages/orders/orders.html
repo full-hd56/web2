@@ -486,30 +486,17 @@
 
                     <!-- Distance & Coordinates -->
                     <td class="py-3 px-3.5 whitespace-nowrap">
-                      <div class="flex items-center gap-1.5">
-                        <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold"
-                          [ngClass]="getOrderDistance(order) <= 1.5 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'">
-                          {{ getOrderDistance(order) }} กม.
-                        </span>
-                      </div>
+                      <span class="font-mono text-xs text-slate-700">{{ getOrderDistance(order) }} กม.</span>
                     </td>
 
                     <!-- Boxes -->
                     <td class="py-3 px-3.5 text-center whitespace-nowrap">
-                      <span
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-orange-50 text-orange-700 border border-orange-200">
-                        {{ order.box_quantity }} กล่อง
-                      </span>
+                      <span class="font-mono text-xs text-slate-700">{{ order.box_quantity }} กล่อง</span>
                     </td>
 
                     <!-- Status -->
                     <td class="py-3 px-3.5 text-center whitespace-nowrap">
-                      <span class="status-pill {{ getStatusBadgeClass(order.status) }}">
-                        @if (order.status === 'PENDING') {
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                        }
-                        <span>{{ getStatusLabel(order.status) }}</span>
-                      </span>
+                      <span class="text-xs text-slate-700">{{ getStatusLabel(order.status) }}</span>
                     </td>
 
                     <!-- Actions -->
