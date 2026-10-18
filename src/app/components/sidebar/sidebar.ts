@@ -4,7 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 interface NavItem {
   path: string;
   label: string;
-  icon: string; // emoji
+  icon: string; // ชื่อไอคอน Material Symbols
 }
 
 /**
@@ -22,7 +22,7 @@ interface NavItem {
 
         <!-- Brand -->
         <div class="flex items-center gap-3 pb-5 border-b border-slate-800">
-          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20 ring-2 ring-white/10 shrink-0">🍱</div>
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20 ring-2 ring-white/10 shrink-0 text-white"><span class="icon icon-fill" aria-hidden="true">bento</span></div>
           <div>
             <div class="flex items-center gap-1.5">
               <h1 class="text-base font-bold text-white tracking-tight leading-tight">ข้าวกล่องส่งด่วน</h1>
@@ -58,7 +58,7 @@ interface NavItem {
                 class="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-transparent text-slate-300 hover:text-white hover:bg-slate-800 transition-all"
               >
                 <div class="flex items-center gap-3">
-                  <span class="text-sm">{{ item.icon }}</span>
+                  <span class="icon text-[20px]" aria-hidden="true">{{ item.icon }}</span>
                   <span>{{ item.label }}</span>
                 </div>
                 @if (badgeFor(item.path); as badge) {
@@ -72,7 +72,7 @@ interface NavItem {
         <!-- Depot info -->
         <div class="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/60 text-xs text-slate-300 space-y-2">
           <div class="flex items-center gap-2 font-bold text-white text-xs">
-            <span>🏢</span><span>จุดกระจายอาหารกลางวัน</span>
+            <span class="icon text-amber-400" aria-hidden="true">warehouse</span><span>จุดกระจายอาหารกลางวัน</span>
           </div>
           <div class="text-[11px] text-slate-400">ม.มหาสารคาม (ขามเรียง)</div>
           <div class="pt-1.5 border-t border-slate-700/50 text-[11px] space-y-1">
@@ -99,10 +99,10 @@ export class Sidebar implements OnInit, OnDestroy {
   readonly peakWindow = '11:30 - 12:30 น.';
 
   readonly navItems: NavItem[] = [
-    { path: '/orders', label: 'จัดการออเดอร์', icon: '📋' },
-    { path: '/routes', label: 'จัดเส้นทางไรเดอร์', icon: '🗺️' },
-    { path: '/customers', label: 'จัดการลูกค้า', icon: '👥' },
-    { path: '/rider', label: 'มุมมองไรเดอร์ (Rider)', icon: '🛵' },
+    { path: '/orders', label: 'จัดการออเดอร์', icon: 'receipt_long' },
+    { path: '/routes', label: 'จัดเส้นทางไรเดอร์', icon: 'route' },
+    { path: '/customers', label: 'จัดการลูกค้า', icon: 'group' },
+    { path: '/rider', label: 'มุมมองไรเดอร์ (Rider)', icon: 'moped' },
   ];
 
   currentTime = '';

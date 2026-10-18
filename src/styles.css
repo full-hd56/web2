@@ -165,3 +165,27 @@
   transform: scale(1.2);
   z-index: 999 !important;
 }
+
+/* Google Material Symbols — ใช้ <span class="icon">ชื่อไอคอน</span>
+   ดูชื่อไอคอนได้ที่ https://fonts.google.com/icons */
+@layer components {
+.icon {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.25em;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  vertical-align: -0.225em;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+  flex-shrink: 0;
+}
+.icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+}

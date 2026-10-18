@@ -2,6 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, signal } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 import { Sidebar } from '../../components/sidebar/sidebar';
 import * as L from 'leaflet';
 
@@ -93,7 +94,7 @@ export class AddCustomer implements OnInit, AfterViewInit, OnDestroy {
     if (!this.pin) {
       const icon = L.divIcon({
         className: '',
-        html: '<div style="font-size:30px;line-height:30px;transform:translate(-50%,-100%)">📍</div>',
+        html: '<span class="icon icon-fill" style="font-size:38px;color:#e11d48;display:block;transform:translate(-50%,-100%);text-shadow:0 2px 4px rgba(0,0,0,.25)">location_on</span>',
         iconSize: [0, 0],
       });
       this.pin = L.marker([lat, lng], { icon, draggable: true }).addTo(this.map);
@@ -202,6 +203,24 @@ export class AddCustomer implements OnInit, AfterViewInit, OnDestroy {
     this.editingId.set(null);
     this.form.set(this.empty_form());
     this.removePin();
+  }
+
+  // ลบลูกค้า (DELETE /customer/:id)
+  async deleteCustomer(id: number) {
+    if (!confirm('ต้องการลบลูกค้าคนนี้ใช่ไหม?')) return;
+    this.formError.set('');
+    this.successMsg.set('');
+    try {
+      await lastValueFrom(
+        this.http.delete(`${API_URL}/customer/${id}`),
+      );
+      if (this.editingId() === id) this.cancelEdit(); // ถ้ากำลังแก้ไขคนนี้อยู่ ให้ล้างฟอร์ม
+      this.successMsg.set('ลบลูกค้าเรียบร้อย');
+      this.loadCustomers();
+    } catch (err: any) {
+      // แสดง error บนหน้าจอ เช่น 404 = backend ยังไม่มี route ลบ หรือไม่พบลูกค้า
+      this.formError.set('ลบไม่สำเร็จ (' + err.status + '): ' + (err.error?.error ?? err.message));
+    }
   }
 
   // ใช้พิกัดจาก GPS ของเครื่อง (เบราว์เซอร์จะขออนุญาตก่อน)

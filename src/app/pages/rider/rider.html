@@ -1,37 +1,131 @@
-<div class="min-h-screen p-3 flex flex-col gap-3 box-border">
+<div class="min-h-screen bg-slate-100">
+  @if (!taskNumber) {
+  <!-- ===== หน้าใส่หมายเลขงาน (ยังไม่ได้รับงาน) ===== -->
+  <div class="max-w-md mx-auto min-h-screen flex flex-col justify-center p-6">
+    <div class="text-center mb-8">
+      <span class="icon icon-fill text-amber-500 text-[56px]">moped</span>
+      <div class="mt-2 text-sm text-slate-500">ไรเดอร์ #{{ riderId }}</div>
+      <h1 class="text-2xl font-bold text-slate-900">รับงานส่งอาหาร</h1>
+    </div>
 
-  <!-- หมายเลข rider -->
-  <div class="border-2 border-black p-3">
-    หมายเลข rider : {{ riderId }}
-  </div>
+    <form class="bg-white rounded-2xl p-5 shadow-sm" (submit)="$event.preventDefault(); acceptTask(taskInput)">
+      <label for="task-number" class="block text-sm font-semibold text-slate-700 mb-2">หมายเลขงาน (Task number)</label>
+      <input #taskInput id="task-number" type="text" inputmode="text" autocomplete="off" autocapitalize="characters"
+             placeholder="เช่น T001"
+             class="w-full h-14 px-4 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none text-xl font-mono tracking-widest text-center uppercase" />
 
-  <div>งานวันนี้</div>
-  <div>รายละเอียดวันนี้ : หยิบข้าวกล่องทั้งหมด {{ totalBoxes }} กล่อง</div>
-
-  <!-- รายการงาน -->
-  <div class="flex flex-col gap-3">
-    @for (job of jobs; track $index) {
-      <div class="border-2 border-black p-3 flex items-center justify-between gap-2"
-           [class.opacity-40]="job.done">
-
-        <div>
-          <div>จุดที่ {{ $index + 1 }}</div>
-          <div>{{ job.detail }}</div>
-          <div>{{ job.boxes }} กล่อง</div>
+      @if (taskError) {
+        <div class="mt-3 flex items-center gap-1.5 text-sm text-rose-600">
+          <span class="icon">error</span> {{ taskError }}
         </div>
+      }
 
-        <div class="flex gap-2">
-          <a [href]="navUrl(job)" target="_blank" rel="noopener"
-             class="border-2 border-black px-3 py-2 text-center">
-            นำทาง
-          </a>
-          <button type="button" (click)="markDone(job)" [disabled]="job.done"
-                  class="border-2 border-black px-3 py-2 cursor-pointer">
-            {{ job.done ? 'ส่งแล้ว' : 'ส่งสำเร็จ' }}
+      <button type="submit"
+              class="mt-4 w-full h-14 rounded-xl bg-amber-500 active:bg-amber-600 text-white text-lg font-semibold flex items-center justify-center gap-2 cursor-pointer">
+        <span class="icon">login</span> รับงาน
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-xs text-slate-400">ขอหมายเลขงานได้จากร้าน</p>
+  </div>
+  } @else {
+  <!-- ===== หน้ารายการงาน (รับงานแล้ว) ===== -->
+  <div class="max-w-md mx-auto min-h-screen flex flex-col">
+
+    <!-- หัวหน้าจอ: หมายเลข rider + ความคืบหน้า -->
+    <header class="sticky top-0 z-10 bg-slate-900 text-white px-4 pt-4 pb-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="icon icon-fill text-amber-400 text-[26px]">moped</span>
+          <div>
+            <div class="text-[11px] text-slate-400 leading-none">ไรเดอร์</div>
+            <div class="font-bold text-lg leading-tight">#{{ riderId }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-[11px] text-slate-400 leading-none">งาน {{ taskNumber }} · ส่งแล้ว</div>
+            <div class="font-bold text-lg leading-tight font-mono">{{ doneCount }}/{{ jobs.length }}</div>
+          </div>
+          <button type="button" (click)="leaveTask()" aria-label="ออกจากงาน"
+                  class="w-10 h-10 rounded-full bg-slate-800 active:bg-slate-700 flex items-center justify-center cursor-pointer">
+            <span class="icon">logout</span>
           </button>
         </div>
-
       </div>
-    }
+      <!-- แถบความคืบหน้า -->
+      <div class="mt-3 h-1.5 rounded-full bg-slate-700 overflow-hidden">
+        <div class="h-full bg-amber-400 transition-all duration-300"
+             [style.width.%]="jobs.length ? (doneCount / jobs.length) * 100 : 0"></div>
+      </div>
+    </header>
+
+    <main class="flex-1 p-4 flex flex-col gap-3">
+
+      <!-- สรุปงานวันนี้ -->
+      <div class="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+        <span class="icon text-amber-600 text-[32px]">bento</span>
+        <div>
+          <div class="text-xs text-slate-500">หยิบข้าวกล่องทั้งหมด</div>
+          <div class="text-xl font-bold text-slate-900">{{ totalBoxes }} กล่อง · {{ jobs.length }} จุด</div>
+        </div>
+      </div>
+
+      <div class="text-sm font-semibold text-slate-500 px-1 mt-1">งานวันนี้</div>
+
+      <!-- รายการงาน -->
+      @for (job of jobs; track $index) {
+        <div class="bg-white rounded-2xl p-4 shadow-sm" [class.opacity-50]="job.done">
+
+          <div class="flex items-start gap-3">
+            <!-- เลขจุด / เครื่องหมายส่งแล้ว -->
+            @if (job.done) {
+              <span class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                <span class="icon">check</span>
+              </span>
+            } @else {
+              <span class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
+                {{ $index + 1 }}
+              </span>
+            }
+
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-slate-900 text-base break-words">{{ job.detail }}</div>
+              <div class="text-sm text-slate-500 mt-0.5">{{ job.boxes }} กล่อง</div>
+            </div>
+
+            @if (phone(job)) {
+              <a [href]="'tel:' + phone(job)" aria-label="โทรหาลูกค้า"
+                 class="w-10 h-10 rounded-full border border-slate-200 text-slate-700 flex items-center justify-center shrink-0 active:bg-slate-100">
+                <span class="icon">call</span>
+              </a>
+            }
+          </div>
+
+          @if (!job.done) {
+            <div class="grid grid-cols-2 gap-2 mt-4">
+              <a [href]="navUrl(job)" target="_blank" rel="noopener"
+                 class="h-12 rounded-xl border border-slate-300 text-slate-800 font-semibold flex items-center justify-center gap-1.5 active:bg-slate-100">
+                <span class="icon">navigation</span> นำทาง
+              </a>
+              <button type="button" (click)="markDone(job)"
+                      class="h-12 rounded-xl bg-amber-500 text-white font-semibold flex items-center justify-center gap-1.5 active:bg-amber-600 cursor-pointer">
+                <span class="icon">check_circle</span> ส่งสำเร็จ
+              </button>
+            </div>
+          } @else {
+            <div class="mt-3 text-sm font-semibold text-emerald-700">ส่งแล้ว</div>
+          }
+        </div>
+      }
+
+      @if (jobs.length && doneCount === jobs.length) {
+        <div class="text-center text-slate-500 py-6">
+          <span class="icon text-emerald-600 text-[40px]">task_alt</span>
+          <div class="mt-1 font-semibold text-slate-700">ส่งครบทุกจุดแล้ว</div>
+        </div>
+      }
+    </main>
   </div>
+  }
 </div>

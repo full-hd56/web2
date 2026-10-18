@@ -78,10 +78,10 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     { status: 'CANCELLED', label: 'ยกเลิกแล้ว', countKey: 'cancelled_orders' },
   ];
 
-  readonly viewModes: Array<{ id: 'TABLE' | 'SPLIT' | 'MAP'; label: string }> = [
-    { id: 'TABLE', label: '📊 ตารางรายการ' },
-    { id: 'SPLIT', label: '⚡ แยกจอ (ตาราง + แผนที่)' },
-    { id: 'MAP', label: '🗺️ แผนที่พิกัดเต็มจอ' },
+  readonly viewModes: Array<{ id: 'TABLE' | 'SPLIT' | 'MAP'; label: string; icon: string }> = [
+    { id: 'TABLE', label: 'ตารางรายการ', icon: 'table_view' },
+    { id: 'SPLIT', label: 'แยกจอ (ตาราง + แผนที่)', icon: 'vertical_split' },
+    { id: 'MAP', label: 'แผนที่พิกัดเต็มจอ', icon: 'map' },
   ];
 
   orders: Order[] = [];
@@ -204,6 +204,11 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  // ลูกค้าที่เลือกอยู่ (ใช้แสดงการ์ดสรุปใต้ dropdown)
+  get selectedCustomer(): Customer | undefined {
+    return this.customers.find((x) => x.id === Number(this.selected_customer_id_dropdown));
+  }
+
   // เลือกลูกค้าจาก dropdown แล้วเติมข้อมูลลงฟอร์มให้อัตโนมัติ
   customer_select(): void {
     const c = this.customers.find((x) => x.id === Number(this.selected_customer_id_dropdown));
@@ -264,7 +269,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
         <div class="relative flex items-center justify-center cursor-pointer">
           <span class="absolute w-12 h-12 rounded-full bg-orange-500/30 animate-ping"></span>
           <div class="relative w-10 h-10 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center shadow-xl border-2 border-white font-bold text-sm">
-            🍱
+            <span class="icon" aria-hidden="true">bento</span>
           </div>
         </div>
       `,
@@ -275,7 +280,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     const depotMarker = L.marker([this.DEPOT.lat, this.DEPOT.lng], { icon: depotIcon }).addTo(this.map);
     depotMarker.bindPopup(`
       <div class="p-3 text-xs">
-        <div class="font-bold text-slate-900 text-sm mb-1">🏢 ${this.DEPOT.name}</div>
+        <div class="font-bold text-slate-900 text-sm mb-1"><span class="icon" aria-hidden="true">warehouse</span> ${this.DEPOT.name}</div>
         <div class="text-slate-600">จุดศูนย์กลางกระจายอาหารกลางวัน</div>
         <div class="mt-2 text-amber-700 font-semibold bg-amber-50 px-2 py-1 rounded border border-amber-200">
           รัศมีจัดส่งสูงสุด: 3.0 กิโลเมตร
@@ -291,7 +296,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       this.recalculateDistance();
       this.updateSelectionPin();
       this.showToast(
-        this.isWithinRadius ? `📍 ปักหมุดพิกัดสำเร็จ (ห่างจากศูนย์ ${this.currentDistanceKm} กม.)` : `⚠️ พิกัดอยู่นอกรัศมีจัดส่ง 3.0 กม. (ห่าง ${this.currentDistanceKm} กม.)`,
+        this.isWithinRadius ? `ปักหมุดพิกัดสำเร็จ (ห่างจากศูนย์ ${this.currentDistanceKm} กม.)` : `พิกัดอยู่นอกรัศมีจัดส่ง 3.0 กม. (ห่าง ${this.currentDistanceKm} กม.)`,
         this.isWithinRadius ? 'success' : 'warning'
       );
     });
@@ -311,7 +316,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
         <div class="relative flex items-center justify-center">
           <span class="absolute w-8 h-8 rounded-full ${this.isWithinRadius ? 'bg-emerald-400/40' : 'bg-rose-400/40'} animate-ping"></span>
           <div class="w-8 h-8 rounded-full ${pinColor} text-white flex items-center justify-center shadow-2xl border-2 border-white font-bold text-xs">
-            📍
+            <span class="icon" aria-hidden="true">location_on</span>
           </div>
         </div>
       `,
@@ -354,14 +359,14 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
               ${this.getStatusLabel(order.status)}
             </span>
           </div>
-          <div class="text-slate-600 font-mono text-xs mb-1">📞 ${order.phone}</div>
-          <div class="text-slate-500 mb-2">🍱 ${order.box_quantity} กล่อง · 📍 ห่างศูนย์ ${dist} กม.</div>
+          <div class="text-slate-600 font-mono text-xs mb-1"><span class="icon" aria-hidden="true">call</span> ${order.phone}</div>
+          <div class="text-slate-500 mb-2"><span class="icon" aria-hidden="true">bento</span> ${order.box_quantity} กล่อง · <span class="icon" aria-hidden="true">location_on</span> ห่างศูนย์ ${dist} กม.</div>
           <div class="flex items-center gap-1.5 pt-2 border-t border-slate-100">
             <button onclick="window.dispatchEvent(new CustomEvent('edit-order-event', {detail: '${order.id}'}))" class="flex-1 py-1 px-2 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-medium border border-amber-200 text-center">
-              ✏️ แก้ไข
+              <span class="icon" aria-hidden="true">edit</span> แก้ไข
             </button>
             <button onclick="window.dispatchEvent(new CustomEvent('cancel-order-event', {detail: '${order.id}'}))" class="flex-1 py-1 px-2 rounded bg-rose-50 hover:bg-rose-100 text-rose-800 text-[11px] font-medium border border-rose-200 text-center">
-              ✕ ยกเลิก
+              <span class="icon" aria-hidden="true">close</span> ยกเลิก
             </button>
           </div>
         </div>
@@ -555,7 +560,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       this.formError = '';
       this.recalculateDistance();
       this.updateSelectionPin();
-      this.showToast(`✓ พบประวัติลูกค้า: ${match.name}`, 'success');
+      this.showToast(`พบประวัติลูกค้า: ${match.name}`, 'success');
     } else {
       this.existingCustomerFound = false;
       this.showToast('ไม่พบประวัติลูกค้าเก่า สามารถกรอกชื่อและพิกัดใหม่ได้ทันที', 'info');
@@ -573,7 +578,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.isMapPinModalOpen = false;
     this.recalculateDistance();
     this.updateSelectionPin();
-    this.showToast(`📍 เลือกพิกัด: ${preset.label} (${preset.distanceKm} กม.)`, 'success');
+    this.showToast(`เลือกพิกัด: ${preset.label} (${preset.distanceKm} กม.)`, 'success');
   }
 
   // ============================================================================
@@ -742,7 +747,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.orderService.generateMockup().subscribe({
       next: (res) => {
         this.isGeneratingMockup = false;
-        this.showToast(`🎲 สุ่มสร้างข้อมูลจำลองสำเร็จ ${res.count} ออเดอร์`, 'success');
+        this.showToast(`สุ่มสร้างข้อมูลจำลองสำเร็จ ${res.count} ออเดอร์`, 'success');
         this.loadData();
       },
       error: (err) => {
@@ -785,7 +790,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     };
     this.markerLayerGroup?.clearLayers();
     this.resetForm();
-    this.showToast('🗑️ ล้างข้อมูลออเดอร์ทั้งหมดเรียบร้อยแล้ว', 'info');
+    this.showToast('ล้างข้อมูลออเดอร์ทั้งหมดเรียบร้อยแล้ว', 'info');
     this.cdr.detectChanges();
 
     // 3. ส่งคำขอลบไปยัง Server ในเบื้องหลัง
@@ -810,7 +815,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.orderService.triggerRouting().subscribe({
       next: (result) => {
         this.isRoutingTriggering = false;
-        this.showToast(`🚀 ส่งออเดอร์เข้าสู่ระบบ CVRPTW สำเร็จ! (${result.total_orders_routed} รายการ)`, 'success');
+        this.showToast(`ส่งออเดอร์เข้าสู่ระบบ CVRPTW สำเร็จ! (${result.total_orders_routed} รายการ)`, 'success');
         setTimeout(() => this.router.navigate(['/routes'], { queryParams: { jobId: result.job_id } }), 600);
       },
       error: (err) => {
@@ -838,7 +843,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   getStatusLabel(status: OrderStatus): string {
     return this.STATUS_META[status]?.label ?? status;
   }
-
   getStatusBadgeClass(status: OrderStatus): string {
     return this.STATUS_META[status]?.badge ?? 'bg-slate-100 text-slate-700';
   }
