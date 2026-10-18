@@ -1,7 +1,7 @@
 <div
   class="flex min-h-screen bg-slate-50 font-sans antialiased text-slate-800 selection:bg-amber-500 selection:text-white">
 
-  <app-sidebar [routesBadge]="riders.length + ' คัน'" />
+  <app-sidebar [routesBadge]="delivery_tasks.length + ' คัน'" />
 
   <!-- ================================================================== -->
   <!-- MAIN WORKSPACE CONTENT AREA                                        -->
@@ -51,7 +51,7 @@
         <div class="bg-white rounded-2xl p-4.5 border border-slate-200/90 shadow-xs">
           <span class="text-xs font-semibold text-slate-500">ไรเดอร์ปฏิบัติการ</span>
           <div class="mt-2 flex items-baseline gap-2">
-            <span class="text-3xl font-extrabold text-slate-900 font-mono">{{ riders.length }}</span>
+            <span class="text-3xl font-extrabold text-slate-900 font-mono">{{ delivery_tasks.length }}</span>
             <span class="text-xs text-slate-500">คัน (ไม่เกิน 10 กล่อง/คัน)</span>
           </div>
         </div>
@@ -101,9 +101,9 @@
         <div id="routeMap" style="height: 380px;" class="w-full"></div>
       </div>
 
-      <!-- Rider Allocation Cards -->
+      <!-- Delivery Task Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        @for (rider of riders; track rider.id; let rIdx = $index) {
+        @for (deliveryTask of delivery_tasks; track deliveryTask.id; let rIdx = $index) {
         <div
           class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col justify-between">
 
@@ -113,12 +113,12 @@
               <div class="flex items-center gap-2.5">
                 <div
                   class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-sm"
-                  [style.background-color]="rider.color">
+                  [style.background-color]="deliveryTask.color">
                   🛵
                 </div>
                 <div>
-                  <h4 class="font-bold text-slate-900 text-sm">{{ rider.name }}</h4>
-                  <div class="text-[11px] text-slate-500 font-mono">{{ rider.plateNumber }} · {{ rider.phone }}</div>
+                  <h4 class="font-bold text-slate-900 text-sm">{{ deliveryTask.name }}</h4>
+
                 </div>
               </div>
 
@@ -131,15 +131,14 @@
             <!-- Zone & Capacity -->
             <div class="mb-4">
               <div class="text-xs text-slate-600 font-medium mb-1.5 flex items-center justify-between">
-                <span>โซนจัดส่ง: <strong>{{ rider.zone }}</strong></span>
-                <span class="font-mono text-amber-700 font-bold">{{ rider.totalBoxes }} / {{ rider.maxBoxes }}
-                  กล่อง</span>
+                
+                {{ deliveryTask.orders.length }} / {{ MAX_ORDERS_PER_TASK }} ออเดอร์ ({{ deliveryTask.totalBoxes }} กล่อง)
               </div>
 
               <!-- Progress Bar (10 Boxes Max) -->
               <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                 <div class="h-full rounded-full transition-all duration-500"
-                  [style.width.%]="(rider.totalBoxes / rider.maxBoxes) * 100" [style.background-color]="rider.color">
+                  [style.width.%]="(deliveryTask.orders.length / MAX_ORDERS_PER_TASK) * 100" [style.background-color]="deliveryTask.color">
                 </div>
               </div>
             </div>
@@ -147,11 +146,11 @@
             <!-- Stops Sequence Timeline -->
             <div class="space-y-2 pt-3 border-t border-slate-100">
               <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                ลำดับจุดส่งมอบ ({{ rider.orders.length }} จุดส่ง):
+                ลำดับจุดส่งมอบ ({{ deliveryTask.orders.length }} จุดส่ง):
               </div>
 
               <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                @for (order of rider.orders; track order.id; let sIdx = $index) {
+                @for (order of deliveryTask.orders; track order.id; let sIdx = $index) {
                 <div
                   class="p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs flex items-center justify-between">
                   <div class="flex items-center gap-2">
@@ -176,16 +175,16 @@
           <!-- Card Footer Actions -->
           <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
             <div class="text-slate-500">
-              ประมาณการ: <strong class="text-slate-900">{{ rider.estimatedTime }}</strong>
+              ประมาณการ: <strong class="text-slate-900">{{ deliveryTask.estimatedTime }}</strong>
               <div class="mt-2 text-xs">
-                <div>กำไรจากอาหาร: {{ getFoodProfit(rider) }} บาท</div>
-                <div>ค่ารอบไรเดอร์: {{ getRiderCost(rider) }} บาท</div>
+                <div>กำไรจากอาหาร: {{ getFoodProfit(deliveryTask) }} บาท</div>
+                <div>ค่ารอบไรเดอร์: {{ getTaskCost(deliveryTask) }} บาท</div>
                 <div class="font-bold">
-                  กำไรสุทธิ: {{ getNetProfit(rider) }} บาท
+                  กำไรสุทธิ: {{ getNetProfit(deliveryTask) }} บาท
                 </div>
               </div>
             </div>
-            <button type="button" (click)="focusRider(rider)"
+            <button type="button" (click)="focusDeliveryTask(deliveryTask)"
               class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold transition">
               🔍 ดูบนแผนที่
             </button>
@@ -218,11 +217,11 @@
       </div>
 
       <div class="space-y-6">
-        @for (rider of riders; track rider.id) {
+        @for (deliveryTask of delivery_tasks; track deliveryTask.id) {
         <div class="border border-slate-200 rounded-xl p-4">
           <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
-            <span class="font-bold text-sm text-slate-900">{{ rider.name }} ({{ rider.plateNumber }})</span>
-            <span class="text-xs font-mono font-bold text-orange-600">ยอดรวม: {{ rider.totalBoxes }} กล่อง</span>
+            <span class="font-bold text-sm text-slate-900">{{ deliveryTask.name }}</span>
+            <span class="text-xs font-mono font-bold text-orange-600">ยอดรวม: {{ deliveryTask.totalBoxes }} กล่อง</span>
           </div>
 
           <table class="w-full text-xs text-left">
@@ -236,7 +235,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              @for (order of rider.orders; track order.id; let oIdx = $index) {
+              @for (order of deliveryTask.orders; track order.id; let oIdx = $index) {
               <tr>
                 <td class="p-2 font-mono">{{ oIdx + 1 }}</td>
                 <td class="p-2 font-semibold">{{ order.customer_name }}</td>
