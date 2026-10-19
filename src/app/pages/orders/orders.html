@@ -239,17 +239,6 @@
                 <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-[10px]"><span class="icon" aria-hidden="true">expand_more</span></span>
               </div>
 
-              @if (selectedCustomer; as c) {
-              <div class="mt-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs space-y-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-slate-900">{{ c.name }}</span>
-                  <span class="font-mono text-slate-600">{{ c.phone }}</span>
-                </div>
-                @if (c.address_detail) {
-                <div class="text-[11px] text-slate-500 leading-relaxed"><span class="icon" aria-hidden="true">location_on</span> {{ c.address_detail }}</div>
-                }
-              </div>
-              }
             </div>
 
 
