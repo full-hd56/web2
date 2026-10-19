@@ -65,9 +65,15 @@ export class OrderService {
     );
   }
 
-  triggerRouting(): Observable<RoutingTriggerResult> {
-    return this.http.post<RoutingTriggerResult>(`${this.rootUrl}/routing/trigger`, {});
+  // triggerRouting(): Observable<RoutingTriggerResult> {
+  //   return this.http.post<RoutingTriggerResult>(`${this.rootUrl}/routing/trigger`, {});
+  // }
+  plan_delivery_tasks(): Observable<any> {
+    return this.http.post<any>(`${this.rootUrl}/delivery_tasks/plan`, {});
   }
+  //{} body ว่างเปล่า
+  // คำนวน จัดเส้นทาง
+
 
   resetAllOrders(): Observable<void> {
     return this.http.delete<ApiResponse<void>>(this.ordersUrl).pipe(map(() => undefined));
