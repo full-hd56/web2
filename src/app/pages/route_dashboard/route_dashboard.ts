@@ -42,10 +42,10 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
   ROUTE_COLORS = ['#EF4444', '#16A34A', '#2563EB', '#EA580C', '#9333EA', '#0891B2', '#DB2777', '#CA8A04'];
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-  DEPOT = {
+  start_point_resturant = {
     lat: 16.2468,
     lng: 103.2520,
-    name: 'ศูนย์กระจายอาหารกลางวัน ม.มหาสารคาม',
+    name: 'ร้านอาหาร',
   };
 
   jobId: string | null = null;
@@ -99,8 +99,8 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   private calculate_task_distance(delivery_task: delivery_task_route): number {
     let totalDistanceKm = 0;
-    let fromLat = this.DEPOT.lat;
-    let fromLng = this.DEPOT.lng;
+    let fromLat = this.start_point_resturant.lat;
+    let fromLng = this.start_point_resturant.lng;
 
     for (const order of delivery_task.orders) {
       totalDistanceKm += this.distanceKm(
@@ -256,7 +256,7 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
     if (!el || this.map) return;
 
     this.map = L.map('routeMap', {
-      center: [this.DEPOT.lat, this.DEPOT.lng],
+      center: [this.start_point_resturant.lat, this.start_point_resturant.lng],
       zoom: 15,
       attributionControl: false,
     });
@@ -280,8 +280,8 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
       iconAnchor: [18, 18],
     });
 
-    L.marker([this.DEPOT.lat, this.DEPOT.lng], { icon: depotIcon })
-      .bindPopup(`<div class="p-2 font-bold text-xs"><span class="icon" aria-hidden="true">warehouse</span> ${this.DEPOT.name} (ศูนย์ต้นทาง)</div>`)
+    L.marker([this.start_point_resturant.lat, this.start_point_resturant.lng], { icon: depotIcon })
+      .bindPopup(`<div class="p-2 font-bold text-xs"><span class="icon" aria-hidden="true">warehouse</span> ${this.start_point_resturant.name} (ศูนย์ต้นทาง)</div>`)
       .addTo(this.map);
 
     this.routeLayers = L.layerGroup().addTo(this.map);
@@ -296,7 +296,7 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
       if (delivery_task.orders.length === 0) continue;
 
       const pathCoords: [number, number][] = [
-        [this.DEPOT.lat, this.DEPOT.lng],
+        [this.start_point_resturant.lat, this.start_point_resturant.lng],
         ...delivery_task.orders.map((o) => [o.latitude, o.longitude] as [number, number]),
       ];
 

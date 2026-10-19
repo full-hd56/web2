@@ -38,7 +38,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   selected_customer_id_dropdown: number | null = null;
   //*********************** */
 
-  // Depot Info (MSU Khamriang)
+  // Depot
   start_point = {
     name: 'ม.มหาสารคาม (ขามเรียง)',
     lat: 16.2468,
@@ -324,9 +324,8 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ============================================================================
-  // 5. จัดเส้นทาง (สร้างใบงาน)
-  // ============================================================================
-  // จัดเส้นทาง สร้างใบงาน (POST /api/delivery_tasks/plan) แล้วไปหน้า routes
+  // จัดเส้นทาง สร้างใบงาน
+  // จัดเส้นทาง สร้างใบงาน (POST /api/delivery_tasks/plan) แล้วไปหน้า route_dashborad
   plan_delivery_tasks(): void {
     if (this.orders.length === 0) {
       this.showToast('ไม่มีรายการออเดอร์สำหรับจัดเส้นทาง', 'warning');
@@ -433,9 +432,8 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.loadOrders();
   }
 
-  // ============================================================================
-  // UI: แผนที่ (Leaflet)
-  // ============================================================================
+
+  // UI แผนที่ Leaflet
   private initMap(): void {
     const container = document.getElementById('orderMap');
     if (!container || this.map) return;
@@ -611,9 +609,8 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     if (order) this.cancelOrder(order);
   };
 
-  // ============================================================================
+
   // UI: คำนวณระยะทาง (ใช้กับแผนที่ และสีหมุด)
-  // ============================================================================
   calculateHaversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const toRad = (v: number) => (v * Math.PI) / 180;
     const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
@@ -635,9 +632,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ============================================================================
-  // UI: ราคาในฟอร์ม / แจ้งเตือน / ตัวช่วย
-  // ============================================================================
+  // UI ราคาในฟอร์ม / แจ้งเตือน / ตัวช่วย
   get totalFormPrice(): number { return this.formData.box_quantity * this.start_point.boxPriceThb; }
   get totalFormCost(): number { return this.formData.box_quantity * this.start_point.boxCostThb; }
   get totalFormProfit(): number { return this.formData.box_quantity * this.start_point.grossProfitThb; }
