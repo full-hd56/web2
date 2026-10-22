@@ -1,11 +1,31 @@
-import { Component } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
-interface Job {
-  detail: string;
-  boxes: number;
-  lat: number;
-  lng: number;
-  done: boolean;
+// ที่อยู่ของ backend (ถ้ารัน backend ในเครื่องเอง เปลี่ยนเป็น 'http://localhost:3000')
+const API_URL = 'https://back-n-web2.vercel.app';
+
+// จุดส่ง 1 จุด (มาจาก task_items + orders + customers)
+interface TaskItem {
+  id: number;               // id ของจุดส่ง (ใช้ตอนกด ส่งสำเร็จ)
+  stop_sequence: number;    // ลำดับการส่ง
+  delivery_status: string;  // PENDING / DELIVERED / LATE / FAILED
+  order_id: number;
+  box_amount: number;
+  customer_name: string;
+  phone: string;
+  address_detail: string;
+  latitude: number;
+  longitude: number;
+}
+
+// ใบงาน 1 ใบ (มาจาก delivery_tasks)
+interface DeliveryTask {
+  task_number: string;
+  total_boxes: number;
+  total_distance: number;
+  estimated_minutes: number;
+  items: TaskItem[];
 }
 
 @Component({
@@ -15,71 +35,71 @@ interface Job {
   styleUrl: './rider.css',
 })
 export class Rider {
-  riderId = '001';
+  // ใบงานที่รับอยู่ ถ้าเป็น null = ยังไม่ได้รับงาน → แสดงหน้าใส่หมายเลขงาน
+  task = signal<DeliveryTask | null>(null);
+  loading = signal(false);
+  taskError = signal('');
+  savingId = signal<number | null>(null); // id ของจุดที่กำลังบันทึก "ส่งสำเร็จ"
 
-  // หมายเลขงาน (task number) ที่รับอยู่ ถ้าเป็น null = ยังไม่ได้รับงาน → แสดงหน้าใส่หมายเลขงาน
-  taskNumber: string | null = null;
-  taskError = '';
+  // จำนวนจุดที่ส่งแล้ว
+  doneCount = computed(() => (this.task()?.items ?? []).filter((i) => this.isDone(i)).length);
 
-  jobs: Job[] = [];
+  constructor(private http: HttpClient) {}
 
-  // ข้อมูลจำลอง: หมายเลขงาน → รายการจุดส่ง
-  // TODO: เมื่อ backend มี API แล้ว เปลี่ยนไปเรียก GET /api/tasks/:task_number แทน
-  private mockTasks: Record<string, Job[]> = {
-    T001: [
-      { detail: 'คุณ A - 081-111-1111', boxes: 2, lat: 16.2467, lng: 103.2541, done: false },
-      { detail: 'คุณ B - 082-222-2222', boxes: 3, lat: 16.2500, lng: 103.2600, done: false },
-      { detail: 'คุณ C - 083-333-3333', boxes: 1, lat: 16.2420, lng: 103.2480, done: false },
-    ],
-    T002: [
-      { detail: 'คุณ D - 084-444-4444', boxes: 2, lat: 16.2482, lng: 103.2541, done: false },
-      { detail: 'คุณ E - 085-555-5555', boxes: 1, lat: 16.2449, lng: 103.2498, done: false },
-    ],
-  };
-
-  // กดปุ่ม "รับงาน": ตรวจหมายเลขงานแล้วโหลดรายการจุดส่ง
-  acceptTask(input: HTMLInputElement) {
+  // กดปุ่ม "รับงาน": ดึงใบงานจาก backend  GET /api/delivery_tasks/:task_number
+  async acceptTask(input: HTMLInputElement) {
     const no = input.value.trim().toUpperCase();
     if (!no) {
-      this.taskError = 'กรุณาใส่หมายเลขงาน';
+      this.taskError.set('กรุณาใส่หมายเลขงาน');
       return;
     }
-    const found = this.mockTasks[no];
-    if (!found) {
-      this.taskError = `ไม่พบงานหมายเลข ${no}`;
-      return;
+
+    this.loading.set(true);
+    this.taskError.set('');
+    try {
+      const res = await lastValueFrom(
+        this.http.get<DeliveryTask>(`${API_URL}/api/delivery_tasks/${encodeURIComponent(no)}`),
+      );
+      this.task.set(res);
+    } catch (err: any) {
+      if (err.status === 404) this.taskError.set(`ไม่พบงานหมายเลข ${no}`);
+      else this.taskError.set('โหลดงานไม่สำเร็จ กรุณาลองใหม่');
     }
-    this.jobs = found.map((j) => ({ ...j })); // copy เพื่อไม่ให้แก้ข้อมูลต้นฉบับ
-    this.taskNumber = no;
-    this.taskError = '';
+    this.loading.set(false);
   }
 
   // ออกจากงานนี้ กลับไปหน้าใส่หมายเลขงาน
   leaveTask() {
     if (!confirm('ออกจากงานนี้ใช่ไหม?')) return;
-    this.taskNumber = null;
-    this.jobs = [];
+    this.task.set(null);
   }
 
-  get totalBoxes() {
-    return this.jobs.reduce((sum, j) => sum + j.boxes, 0);
+  // กด "ส่งสำเร็จ"  PATCH /api/delivery_tasks/items/:id/delivered
+  async markDone(item: TaskItem) {
+    this.savingId.set(item.id);
+    try {
+      const res: any = await lastValueFrom(
+        this.http.patch(`${API_URL}/api/delivery_tasks/items/${item.id}/delivered`, {}),
+      );
+      // อัปเดตสถานะจุดนี้ในหน้าจอ (DELIVERED หรือ LATE)
+      const t = this.task();
+      if (t) {
+        this.task.set({
+          ...t,
+          items: t.items.map((i) => (i.id === item.id ? { ...i, delivery_status: res.delivery_status } : i)),
+        });
+      }
+    } catch (err: any) {
+      alert('บันทึกไม่สำเร็จ: ' + (err.error?.error ?? err.message));
+    }
+    this.savingId.set(null);
   }
 
-  get doneCount() {
-    return this.jobs.filter((j) => j.done).length;
+  isDone(item: TaskItem) {
+    return item.delivery_status === 'DELIVERED' || item.delivery_status === 'LATE';
   }
 
-  // ดึงเบอร์โทรจาก detail เช่น 'คุณ A - 081-111-1111' → '0811111111'
-  phone(job: Job) {
-    const m = job.detail.match(/[0-9][0-9-]{8,}/);
-    return m ? m[0].replace(/-/g, '') : '';
-  }
-
-  navUrl(job: Job) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}&travelmode=driving`;
-  }
-
-  markDone(job: Job) {
-    job.done = true;
+  navUrl(item: TaskItem) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}&travelmode=driving`;
   }
 }
