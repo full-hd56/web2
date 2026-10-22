@@ -80,7 +80,9 @@
 
       <!-- รายการจุดส่ง -->
       @for (item of t.items; track item.id) {
-        <div class="bg-white rounded-2xl p-4 shadow-sm" [class.opacity-50]="isDone(item)">
+        <div class="bg-white rounded-2xl p-4 shadow-sm"
+             [class.opacity-50]="!isCurrent(item)"
+             [class.ring-2]="isCurrent(item)" [class.ring-amber-500]="isCurrent(item)">
 
           <div class="flex items-start gap-3">
             @if (isDone(item)) {
@@ -109,7 +111,8 @@
             }
           </div>
 
-          @if (!isDone(item)) {
+          @if (isCurrent(item)) {
+            <!-- จุดที่ต้องส่งตอนนี้: กดนำทาง / ส่งสำเร็จ ได้ -->
             <div class="grid grid-cols-2 gap-2 mt-4">
               <a [href]="navUrl(item)" target="_blank" rel="noopener"
                  class="h-12 rounded-xl border border-slate-300 text-slate-800 font-semibold flex items-center justify-center gap-1.5 active:bg-slate-100">
@@ -119,6 +122,12 @@
                       class="h-12 rounded-xl bg-amber-500 text-white font-semibold flex items-center justify-center gap-1.5 active:bg-amber-600 disabled:opacity-60 cursor-pointer">
                 <span class="icon">check_circle</span> {{ savingId() === item.id ? 'กำลังบันทึก...' : 'ส่งสำเร็จ' }}
               </button>
+            </div>
+          } @else if (!isDone(item)) {
+            <!-- จุดที่ยังไม่ถึงคิว: ล็อกไว้ ต้องส่งจุดก่อนหน้าให้เสร็จก่อน -->
+            <div class="mt-3 text-sm text-slate-500 flex items-center gap-1.5">
+              <span class="icon text-[18px]">lock</span>
+              ส่งจุดที่ {{ currentItem()?.stop_sequence }} ให้เสร็จก่อน
             </div>
           } @else {
             <div class="mt-3 text-sm font-semibold"

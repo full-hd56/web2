@@ -44,6 +44,13 @@ export class Rider {
   // จำนวนจุดที่ส่งแล้ว
   doneCount = computed(() => (this.task()?.items ?? []).filter((i) => this.isDone(i)).length);
 
+  // จุดที่ต้องส่ง "ตอนนี้" = จุดแรก (ตามลำดับ) ที่ยังไม่ส่ง
+  // ไรเดอร์ต้องส่งตามลำดับ กดข้ามไปจุดถัดไปไม่ได้
+  currentItem = computed(() => {
+    const items = [...(this.task()?.items ?? [])].sort((a, b) => a.stop_sequence - b.stop_sequence);
+    return items.find((i) => !this.isDone(i)) ?? null;
+  });
+
   constructor(private http: HttpClient) {}
 
   // กดปุ่ม "รับงาน": ดึงใบงานจาก backend  GET /api/delivery_tasks/:task_number
@@ -76,6 +83,7 @@ export class Rider {
 
   // กด "ส่งสำเร็จ"  PATCH /api/delivery_tasks/items/:id/delivered
   async markDone(item: TaskItem) {
+    if (!this.isCurrent(item)) return; // กันกดข้ามลำดับ
     this.savingId.set(item.id);
     try {
       const res: any = await lastValueFrom(
@@ -93,6 +101,11 @@ export class Rider {
       alert('บันทึกไม่สำเร็จ: ' + (err.error?.error ?? err.message));
     }
     this.savingId.set(null);
+  }
+
+  // จุดนี้คือจุดที่ต้องส่งตอนนี้ไหม (กดนำทาง / ส่งสำเร็จ ได้เฉพาะจุดนี้)
+  isCurrent(item: TaskItem) {
+    return this.currentItem()?.id === item.id;
   }
 
   isDone(item: TaskItem) {
