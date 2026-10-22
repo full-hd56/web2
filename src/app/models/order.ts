@@ -40,7 +40,8 @@ export interface OrderStats {
   assigned_orders: number;
   completed_orders: number;
   cancelled_orders: number;
-  total_revenue_thb: number; // 65 THB per box
+  delivered_boxes?: number;  // กล่องที่ส่งถึงลูกค้าแล้ว
+  total_revenue_thb: number; // 65 THB per box (เฉพาะที่ส่งแล้ว)
   total_cost_thb: number;    // 40 THB per box
   gross_profit_thb: number;  // 25 THB per box
 }

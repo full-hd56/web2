@@ -117,6 +117,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   toasts: Toast[] = [];
   private toastCounter = 0;
 
+  private refreshTimer: any; // ตัวจับเวลาดึงข้อมูลใหม่อัตโนมัติ
   private map: L.Map | null = null;
   private markerLayerGroup: L.LayerGroup | null = null;
   private selectionPinMarker: L.Marker | null = null;
@@ -134,6 +135,12 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     window.addEventListener('edit-order-event', this.onCustomEdit);
     window.addEventListener('cancel-order-event', this.onCustomCancel);
 
+    // ดึงข้อมูลใหม่ทุก 10 วินาที → พอไรเดอร์กด "ส่งสำเร็จ" ยอดขาย/กำไร/สถานะจะอัปเดตเอง
+    this.refreshTimer = setInterval(() => {
+      this.loadOrders(true);
+      this.loadStats();
+    }, 10000);
+
     ///////////////////////////
     //dropdown customer
     this.load_customers();
@@ -150,6 +157,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.searchSub?.unsubscribe();
     window.removeEventListener('edit-order-event', this.onCustomEdit);
     window.removeEventListener('cancel-order-event', this.onCustomCancel);
+    clearInterval(this.refreshTimer); // ออกจากหน้าแล้ว หยุดดึงข้อมูล
     if (this.map) {
       this.map.remove();
       this.map = null;
@@ -162,8 +170,9 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.loadStats();
   }
 
-  loadOrders(): void {
-    this.isLoading = true;
+  // silent = true: โหลดเบื้องหลัง (ตอน refresh อัตโนมัติ) ไม่ต้องโชว์ตัวโหลด
+  loadOrders(silent = false): void {
+    if (!silent) this.isLoading = true;
     this.orderService.getOrders('ALL', this.searchTerm).subscribe({
       next: (data) => {
         this.orders = data;
