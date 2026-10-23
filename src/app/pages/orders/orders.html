@@ -409,7 +409,7 @@
                     <th scope="col" class="py-3 px-3.5 w-10 text-center">#</th>
                     <th scope="col" class="py-3 px-3.5">ลูกค้า</th>
                     <th scope="col" class="py-3 px-3.5">เบอร์โทรศัพท์</th>
-                    <th scope="col" class="py-3 px-3.5">ระยะทาง</th>
+                    
                     <th scope="col" class="py-3 px-3.5 text-center">จำนวนกล่อง</th>
                     <th scope="col" class="py-3 px-3.5 text-center">สถานะ</th>
                     <th scope="col" class="py-3 px-3.5 text-center w-28">จัดการ</th>
@@ -419,7 +419,7 @@
                 <tbody class="divide-y divide-slate-100">
                   @if (isLoading) {
                   <tr>
-                    <td colspan="7" class="py-12 text-center text-slate-400">
+                    <td colspan="6" class="py-12 text-center text-slate-400">
                       <div class="inline-flex items-center gap-2">
                         <svg class="animate-spin h-5 w-5 text-amber-500" viewBox="0 0 24 24" fill="none">
                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
@@ -468,10 +468,6 @@
                       {{ order.phone }}
                     </td>
 
-                    <!-- Distance & Coordinates -->
-                    <td class="py-3 px-3.5 whitespace-nowrap">
-                      <span class="font-mono text-xs text-slate-700">{{ getOrderDistance(order) }} กม.</span>
-                    </td>
 
                     <!-- Boxes -->
                     <td class="py-3 px-3.5 text-center whitespace-nowrap">

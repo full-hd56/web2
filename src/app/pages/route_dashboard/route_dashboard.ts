@@ -120,8 +120,8 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
   //GET /api/delivery_tasks    ใบงานทั้งหมด
   //GET /api/delivery_tasks/:task_number จุดส่งของแต่ละใบ 
   load_routing_data(): void {
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // เช่น 20261019
-
+    //const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // 20261019
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).replace(/-/g, ''); //20261019
     this.http.get<any[]>(`${API_URL}/api/delivery_tasks`).subscribe({
       next: (tasks) => {
         // เอาเฉพาะใบงานของวันนี้
