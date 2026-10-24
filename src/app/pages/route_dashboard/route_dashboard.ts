@@ -43,14 +43,14 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
   MAX_ORDERS_PER_TASK = 3;
 
   // สีเส้นทางของไรเดอร์แต่ละคน (คนที่ 1 แดง, 2 เขียว, 3 น้ำเงิน, ...)
-  ROUTE_COLORS = ['#EF4444', '#16A34A', '#2563EB', '#EA580C', '#9333EA', '#0891B2', '#DB2777', '#CA8A04'];
+  ROUTE_COLORS = ["#EF4444", "#16A34A", "#2563EB", "#EA580C", "#9333EA", "#0891B2","#DB2777", "#CA8A04", "#111827", "#7C2D12", "#65A30D", "#1E3A8A",];
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
   // จุดเริ่ม = ร้าน (เหมือน start_point ใน backend)
   start_point = {
     lat: 16.2468,
     lng: 103.2520,
-    name: 'ศูนย์กระจายอาหารกลางวัน ม.มหาสารคาม',
+    name: 'ร้านอาหาร',
   };
 
   jobId: string | null = null;
@@ -212,8 +212,28 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.routeLayers = L.layerGroup().addTo(this.map);
     this.renderRoutesOnMap();
   }
+  ///////******************************************** */
+  // วาดเส้นตามถนนจริง OSRM 
+  private async draw_road_line(points: [number, number][], color: string) {
+    let line = points; // เริ่มต้น = เส้นตรง (ใช้ตอนถาม OSRM ไม่ได้)
+    try {
+      // OSRM ต้องการพิกัดแบบ lng,lat คั่นด้วย ;
+      const coords = points.map((p) => `${p[1]},${p[0]}`).join(';');
+      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+      const data: any = await response.json();
+      if (data.code === 'Ok') {
+        // OSRM ตอบเป็น [lng, lat] แต่ Leaflet ใช้ [lat, lng] เลยต้องสลับ
+        line = data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+      }
+    } catch {
+      console.log('OSRM ผิดพลาด');
+    }
+    if (!this.routeLayers) return;
+    L.polyline(line, { color: color, weight: 4, opacity: 0.8, dashArray: '6, 6' }).addTo(this.routeLayers);
+  }
+//************************************************** */
 
-  private renderRoutesOnMap(): void {
+  private async renderRoutesOnMap() {
     if (!this.map || !this.routeLayers) return;
     this.routeLayers.clearLayers();
 
@@ -225,13 +245,8 @@ export class RouteDashboard implements OnInit, AfterViewInit, OnDestroy {
         ...delivery_task.orders.map((o) => [o.latitude, o.longitude] as [number, number]),
       ];
 
-      // Polyline route
-      L.polyline(pathCoords, {
-        color: delivery_task.color,
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '6, 6',
-      }).addTo(this.routeLayers);
+      // เส้นทางตามถนนจริง OSRM ถ้าถามไม่ได้ จะวาดเส้นตรงแทน
+      await this.draw_road_line(pathCoords, delivery_task.color);
 
       // Order stops markers
       delivery_task.orders.forEach((order, sIdx) => {

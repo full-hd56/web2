@@ -109,8 +109,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
   };
 
   formError = '';
-  currentDistanceKm = 0.27;
-  isWithinRadius = true;
 
   isResetConfirmOpen = false;
 
@@ -124,7 +122,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
 
   // เริ่มต้น / ปิดหน้า
   ngOnInit(): void {
-    this.recalculateDistance();
     this.loadData();
     this.searchSub = this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged())
@@ -228,7 +225,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     this.formData.phone = c.phone;
     this.formData.latitude = Number(c.latitude);
     this.formData.longitude = Number(c.longitude);
-    this.recalculateDistance();
     this.updateSelectionPin();
   }
 
@@ -283,7 +279,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       box_quantity: order.box_quantity,
     };
     this.formError = '';
-    this.recalculateDistance();
     this.updateSelectionPin();
     this.focusOrderOnMap(order);
   }
@@ -304,7 +299,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
       box_quantity: 2,
     };
     this.formError = '';
-    this.recalculateDistance();
     this.updateSelectionPin();
   }
 
@@ -500,12 +494,12 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     if (!this.map) return;
     if (this.selectionPinMarker) this.map.removeLayer(this.selectionPinMarker);
 
-    const pinColor = this.isWithinRadius ? 'bg-emerald-600' : 'bg-rose-600';
+    const pinColor = 'bg-emerald-600';
     const selectIcon = L.divIcon({
       className: 'custom-select-pin',
       html: `
         <div class="relative flex items-center justify-center">
-          <span class="absolute w-8 h-8 rounded-full ${this.isWithinRadius ? 'bg-emerald-400/40' : 'bg-rose-400/40'} animate-ping"></span>
+           <span class="absolute w-8 h-8 rounded-full bg-emerald-400/40 animate-ping"></span>
           <div class="w-8 h-8 rounded-full ${pinColor} text-white flex items-center justify-center shadow-2xl border-2 border-white font-bold text-xs">
             <span class="icon" aria-hidden="true">location_on</span>
           </div>
@@ -540,7 +534,6 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
         iconAnchor: [14, 14],
       });
 
-      const dist = this.getOrderDistance(order);
       const marker = L.marker([order.latitude, order.longitude], { icon });
       marker.bindPopup(`
         <div class="p-3 text-xs min-w-[200px]">
@@ -551,7 +544,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
             </span>
           </div>
           <div class="text-slate-600 font-mono text-xs mb-1"><span class="icon" aria-hidden="true">call</span> ${order.phone}</div>
-          <div class="text-slate-500 mb-2"><span class="icon" aria-hidden="true">bento</span> ${order.box_quantity} กล่อง · <span class="icon" aria-hidden="true">location_on</span> ห่างศูนย์ ${dist} กม.</div>
+          <div class="text-slate-500 mb-2"><span class="icon" aria-hidden="true">bento</span> ${order.box_quantity} กล่อง</div>
           <div class="flex items-center gap-1.5 pt-2 border-t border-slate-100">
             <button onclick="window.dispatchEvent(new CustomEvent('edit-order-event', {detail: '${order.id}'}))" class="flex-1 py-1 px-2 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-medium border border-amber-200 text-center">
               <span class="icon" aria-hidden="true">edit</span> แก้ไข
@@ -618,28 +611,7 @@ export class Orders implements OnInit, AfterViewInit, OnDestroy {
     if (order) this.cancelOrder(order);
   };
 
-
-  // UI: คำนวณระยะทาง (ใช้กับแผนที่ และสีหมุด)
-  calculateHaversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const toRad = (v: number) => (v * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-
-  getOrderDistance(order: Order): number {
-    return order.distance_from_depot_km != null
-      ? order.distance_from_depot_km
-      : parseFloat(this.calculateHaversine(this.start_point.lat, this.start_point.lng, order.latitude, order.longitude).toFixed(2));
-  }
-
-  recalculateDistance(): void {
-    const lat = Number(this.formData.latitude), lng = Number(this.formData.longitude);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      this.currentDistanceKm = parseFloat(this.calculateHaversine(this.start_point.lat, this.start_point.lng, lat, lng).toFixed(2));
-      this.isWithinRadius = this.currentDistanceKm <= this.start_point.maxRadiusKm;
-    }
-  }
+  // UI
 
   // UI ราคาในฟอร์ม / แจ้งเตือน / ตัวช่วย
   get totalFormPrice(): number { return this.formData.box_quantity * this.start_point.boxPriceThb; }
