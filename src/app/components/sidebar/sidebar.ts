@@ -16,8 +16,13 @@ interface NavItem {
   selector: 'app-sidebar',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
+  styles: [`
+    :host {
+      display: contents;
+    }
+  `],
   template: `
-    <aside class="w-72 bg-slate-900 border-r border-slate-800 text-slate-200 flex flex-col justify-between p-5 shrink-0 min-h-screen hidden md:flex z-30">
+    <aside class="w-72 bg-slate-900 border-r border-slate-800 text-slate-200 flex flex-col justify-between p-5 shrink-0 h-screen sticky top-0 self-start overflow-y-auto hidden md:flex z-30">
       <div class="space-y-6">
 
         <!-- Brand -->
